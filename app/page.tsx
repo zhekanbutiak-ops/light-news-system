@@ -187,31 +187,6 @@ export default function Home() {
     }
   };
 
-  const publishToTelegram = async (title: string, content: string, link?: string, category?: string) => {
-    console.log("Кнопка натиснута для:", title); // МАЯЧОК 1
-    try {
-      const res = await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, link, category: category ?? 'Головне' }),
-      });
-
-      console.log("Відповідь сервера:", res.status); // МАЯЧОК 2
-
-      if (res.ok) {
-        alert("Відправлено в Telegram!");
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Помилка від сервера:", errorData);
-        const msg = (errorData as { error?: string }).error || "Помилка сервера: " + res.status;
-        alert(msg);
-      }
-    } catch (err) {
-      console.error("Помилка мережі:", err);
-      alert("Не вдалося з'єднатися з сервером");
-    }
-  };
-
   return (
     <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen transition-colors duration-500 font-sans relative overflow-x-hidden`}>
       
@@ -321,12 +296,6 @@ export default function Home() {
                     <span className="text-red-600 font-black text-[9px] uppercase mb-2">{item.time} / {activeCategory}</span>
                     <h2 className="text-2xl font-[1000] leading-tight tracking-tighter mb-4 uppercase italic"><a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a></h2>
                     <p className="text-sm opacity-50 italic line-clamp-2 leading-relaxed">{item.content}</p>
-                    <button 
-                      onClick={() => publishToTelegram(item.title, item.fullText || item.content || item.description || "", item.link, activeCategory)}
-                      className="mt-4 px-4 py-2 bg-zinc-800 text-[10px] font-bold rounded-lg hover:bg-red-600 transition-all"
-                    >
-                      АНАЛІЗУВАТИ ТА ПОСТИТИ В TG
-                    </button>
                   </div>
                 </article>
               ))
