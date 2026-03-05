@@ -362,7 +362,7 @@ export default function Home() {
           </div>
 
           <aside className="lg:col-span-4 min-w-0">
-            <div className={`p-4 sm:p-6 md:p-8 lg:sticky lg:top-24 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
+            <div className={`p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
                     <div className="space-y-4">
                         <p className="text-[10px] font-black uppercase opacity-30 italic border-b pb-2">Market Overview</p>

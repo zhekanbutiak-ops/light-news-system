@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     // 3. Повідомлення: оригінальний заголовок + AI-опис + посилання
     const message = `<b>${source.name}</b>\n\n<b>${originalTitle}</b>\n\n${aiDescription}\n\n👉 <a href="${latestNews.link}">Читати повністю</a>`;
 
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -60,7 +60,16 @@ export async function GET(req: NextRequest) {
       }),
     });
 
-    return NextResponse.json({ success: true, category: source.name });
+    const tgData = await tgRes.json().catch(() => ({}));
+    if (!tgRes.ok) {
+      console.error("[auto-publish] Telegram error:", tgData);
+      return NextResponse.json(
+        { error: "Telegram send failed", details: (tgData as { description?: string }).description },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ success: true, category: source.name, posted: originalTitle });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Error";
     return NextResponse.json({ error: message }, { status: 500 });
