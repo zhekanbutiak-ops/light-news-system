@@ -31,8 +31,9 @@ const RSS_CONFIG: Record<string, string[]> = {
     "https://biz.nv.ua/ukr/rss/all.xml"
   ],
   "⚠️ Breaking": [
-    "https://k.img.com.ua/rss/ua/all_news.rss",
-    "https://informator.ua/uk/feed"
+    "https://www.pravda.com.ua/rss/view_mainnews/",
+    "https://www.pravda.com.ua/rss/view_news/",
+    "https://interfax.com.ua/news/last.rss"
   ]
 };
 
