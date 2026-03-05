@@ -239,6 +239,9 @@ export default function Home() {
                     {dateLine && <span className="uppercase">{dateLine}</span>}
                     <span>${markets.usd.toFixed(2)}</span>
                     <span>€{markets.eur.toFixed(2)}</span>
+                    <span>BTC ${markets.btc.toLocaleString()}</span>
+                    <span>Au {markets.gold}₴</span>
+                    <span>Ag {markets.silver}₴</span>
                     <span className="flex items-center gap-1.5">
                         <span className="opacity-80" aria-hidden>☁</span>
                         <span>{weather.temp != null ? `${weather.temp > 0 ? '+' : ''}${weather.temp}°` : '—°'}</span>
@@ -334,16 +337,6 @@ export default function Home() {
           <aside className="lg:col-span-4 min-w-0">
             <div className={`p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
-                    <div className="space-y-4">
-                        <p className="text-[10px] font-black uppercase opacity-30 italic border-b pb-2">Market Overview</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col"><span className="text-[8px] font-bold opacity-50 uppercase">BTC</span><span className="text-sm font-black">${markets.btc.toLocaleString()}</span></div>
-                            <div className="flex flex-col"><span className="text-[8px] font-bold opacity-50 uppercase">USD/UAH</span><span className="text-sm font-black text-green-500">{markets.usd.toFixed(2)}₴</span></div>
-                            <div className="flex flex-col"><span className="text-[8px] font-bold opacity-50 uppercase">Gold (1g)</span><span className="text-sm font-black">{markets.gold}₴</span></div>
-                            <div className="flex flex-col"><span className="text-[8px] font-bold opacity-50 uppercase">Silver (1g)</span><span className="text-sm font-black">{markets.silver}₴</span></div>
-                        </div>
-                    </div>
-
                     {/* Карта тривог — посилання (iframe часто блокується або не завантажується) */}
                     <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800 bg-[#09090b] p-3 shadow-lg">
                       <div className="flex items-center justify-between mb-3 px-1">
@@ -360,7 +353,7 @@ export default function Home() {
                       </div>
 
                       <a
-                        href="https://alerts.in.ua/"
+                        href="https://alerts.in.ua/lite"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="relative flex w-full aspect-square rounded-lg overflow-hidden border border-zinc-900 bg-gradient-to-b from-zinc-800/80 to-zinc-900 group"
@@ -370,7 +363,7 @@ export default function Home() {
                           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
                             Відкрити карту тривог
                           </span>
-                          <span className="text-[8px] text-zinc-600">alerts.in.ua</span>
+                          <span className="text-[8px] text-zinc-600">alerts.in.ua (lite)</span>
                         </div>
                       </a>
                     </div>
