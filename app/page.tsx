@@ -162,7 +162,10 @@ export default function Home() {
           link: item.link,
           content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
           fullText: item.contentSnippet || item.content || item.description || item.contentEncoded || "",
-          image: item.enclosure?.url || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/800/500`
+          image: (() => {
+            const u = item.enclosure?.url || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/800/500`;
+            return u.startsWith("http://") ? u.replace("http://", "https://") : u;
+          })()
         })));
       }
     } catch (e) {

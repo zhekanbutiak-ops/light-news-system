@@ -3,6 +3,18 @@ import Parser from 'rss-parser';
 
 const parser = new Parser();
 
+const KV_KEY_PREFIX = "ln_threat_last:";
+
+async function getKV() {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  try {
+    const { kv } = await import("@vercel/kv");
+    return kv;
+  } catch {
+    return null;
+  }
+}
+
 /** Прибирає з тексту підпис каналу типу «ПІДПИСАТИСЯ | ППО UA РАДАР» (RSS тягне це з TG). */
 function stripChannelSignature(raw: string): string {
   if (!raw?.trim()) return "";
@@ -23,8 +35,8 @@ const THREAT_SOURCES = [
   { name: "⚠️ ППО UA РАДАР", url: "https://ch2rss.fflow.net/PpoUaRadar1" },
 ];
 
-// Пост вважаємо "новим" якщо не старіший за 2.5 хв (RSS-мости часто мають затримку 1–2 хв)
-const NEW_POST_WINDOW_MS = 2.5 * 60 * 1000;
+// Без KV: пост вважаємо "новим" якщо не старіший за N хв (RSS ch2rss часто має затримку 3–5 хв)
+const NEW_POST_WINDOW_MS = 10 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -38,6 +50,8 @@ export async function GET(req: NextRequest) {
 
   const results: { source: string; posted?: boolean; reason?: string }[] = [];
 
+  const kv = await getKV();
+
   for (const source of THREAT_SOURCES) {
     try {
       const feed = await parser.parseURL(source.url);
@@ -47,11 +61,20 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const pubDate = latest.pubDate ? new Date(latest.pubDate).getTime() : 0;
-      const now = Date.now();
-      if (now - pubDate > NEW_POST_WINDOW_MS) {
-        results.push({ source: source.name, reason: "not new (older than 2.5 min)" });
-        continue;
+      const key = `${KV_KEY_PREFIX}${encodeURIComponent(source.url)}`;
+      if (kv) {
+        const lastLink = (await kv.get(key)) as string | null;
+        if (lastLink === latest.link) {
+          results.push({ source: source.name, reason: "already posted" });
+          continue;
+        }
+      } else {
+        const pubDate = latest.pubDate ? new Date(latest.pubDate).getTime() : 0;
+        const now = Date.now();
+        if (now - pubDate > NEW_POST_WINDOW_MS) {
+          results.push({ source: source.name, reason: "not new (older than 10 min, add KV for reliable detection)" });
+          continue;
+        }
       }
 
       const title = stripChannelSignature(latest.title ?? "");
@@ -77,6 +100,7 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
+      if (kv) await kv.set(key, latest.link);
       results.push({ source: source.name, posted: true });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error";
