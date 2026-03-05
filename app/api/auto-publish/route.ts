@@ -27,22 +27,28 @@ export async function GET(req: NextRequest) {
 
     if (!latestNews) return NextResponse.json({ error: "No news" });
 
-    // 2. AI Аналіз з урахуванням категорії
+    // 2. Запит до ШІ тільки для опису (заголовок з парсера — без змін)
+    const originalTitle = latestNews.title;
+    const originalText = latestNews.contentSnippet || latestNews.content || "";
+
     const completion = await groq.chat.completions.create({
       messages: [
-        { 
-          role: "system", 
-          content: `Ти аналітик LIGHT AI. Твоя спеціалізація: ${source.name}. Роби гострий, експертний коментар українською. Максимум 2-3 речення.` 
+        {
+          role: "system",
+          content: "Ти професійний журналіст. Проаналізуй текст і напиши стислий опис (до 3 речень) у професійному стилі. Не повторюй заголовок новини."
         },
-        { role: "user", content: `Новина: ${latestNews.title}. Текст: ${latestNews.contentSnippet}` }
+        {
+          role: "user",
+          content: `Проаналізуй цей текст і напиши стислий опис (до 3 речень) у професійному стилі, не повторюючи заголовок:\n\n${originalText}`
+        }
       ],
       model: "llama-3.3-70b-versatile",
     });
 
-    const aiAnalysis = completion.choices[0]?.message?.content;
+    const aiDescription = completion.choices[0]?.message?.content || "Опис недоступний";
 
-    // 3. Формуємо пост
-    const message = `<b>${source.name}</b>\n\n⚡️ <b>${latestNews.title}</b>\n\n${aiAnalysis}\n\n<a href="${latestNews.link}">Читати повністю</a>`;
+    // 3. Повідомлення: оригінальний заголовок + AI-опис + посилання
+    const message = `<b>${source.name}</b>\n\n<b>${originalTitle}</b>\n\n${aiDescription}\n\n👉 <a href="${latestNews.link}">Читати повністю</a>`;
 
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',

@@ -17,25 +17,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Заголовок або текст відсутні" }, { status: 400 });
     }
 
-    // 3. Генерація ШІ-аналізу
+    // 3. Запит до ШІ тільки для опису (заголовок не чіпаємо)
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "Ти професійний журналіст. Зроби короткий, гострий аналіз новини для Telegram. Використовуй емодзі. Максимум 3-4 речення."
+          content: "Ти професійний журналіст. Проаналізуй текст і напиши стислий опис (до 3 речень) у професійному стилі. Не повторюй заголовок новини."
         },
         {
           role: "user",
-          content: `Проаналізуй новину: ${title}. Текст: ${content}`
+          content: `Проаналізуй цей текст і напиши стислий опис (до 3 речень) у професійному стилі, не повторюючи заголовок:\n\n${content}`
         }
       ],
       model: "llama-3.3-70b-versatile",
     });
 
-    const aiAnalysis = completion.choices[0]?.message?.content || "Аналіз недоступний";
+    const aiDescription = completion.choices[0]?.message?.content || "Опис недоступний";
 
-    // 4. Формування повідомлення для TG
-    const message = `<b>${title}</b>\n\n${aiAnalysis}\n\n<a href="${link}">Читати повністю</a>`;
+    // 4. Повідомлення: оригінальний заголовок + AI-опис + посилання
+    const message = `<b>${title}</b>\n\n${aiDescription}\n\n👉 <a href="${link || ""}">Читати повністю</a>`;
 
     // 5. Відправка в Telegram
     const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
