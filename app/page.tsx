@@ -321,7 +321,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-2.5 sm:py-2 border-b overflow-hidden backdrop-blur-md px-2 sm:px-0`}>
+        <div aria-hidden="true" className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-2.5 sm:py-2 border-b overflow-hidden backdrop-blur-md px-2 sm:px-0`}>
             <div className="marquee-container flex whitespace-nowrap">
                 <div className="animate-marquee flex">
                     {poems.concat(poems).map((poem, index) => <span key={index} className="mx-6 sm:mx-10 text-[8px] sm:text-[9px] font-bold uppercase italic">{poem}</span>)}
@@ -384,6 +384,18 @@ export default function Home() {
                     <span className="text-red-600 font-black text-[10px] uppercase mb-2">{item.time} / {activeCategory}</span>
                     <h2 className="text-lg sm:text-2xl font-[1000] leading-snug sm:leading-tight tracking-tighter mb-4 sm:mb-4 uppercase italic"><a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline active:opacity-80">{item.title}</a></h2>
                     <p className="text-sm opacity-60 italic line-clamp-2 leading-relaxed">{item.content}</p>
+                    <a
+                      href="https://t.me/lightnews13"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`mt-4 inline-flex items-center gap-2 self-start px-4 py-2 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[#2AABEE]/30 focus:ring-offset-2 ${darkMode ? 'border-zinc-600/80 text-zinc-400 hover:border-[#2AABEE]/60 hover:text-[#2AABEE] hover:bg-[#2AABEE]/8 focus:ring-offset-zinc-900' : 'border-zinc-300 text-zinc-600 hover:border-[#2AABEE] hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 focus:ring-offset-white'}`}
+                      title="Підписатися на канал у Telegram"
+                    >
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                      </svg>
+                      Підписатися на канал
+                    </a>
                   </div>
                 </article>
               ))
