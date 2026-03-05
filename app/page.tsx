@@ -43,6 +43,8 @@ export default function Home() {
   const [tensionLabel, setTensionLabel] = useState("Стабільно");
 
   const [donateAmount, setDonateAmount] = useState("100");
+  const [digest, setDigest] = useState<string | null>(null);
+  const [digestLoading, setDigestLoading] = useState(false);
 
   const poems = [
     "Борітеся — поборете, Вам Бог помагає! За вас правда, за вас слава і воля святая! (Т. Шевченко)",
@@ -213,6 +215,28 @@ export default function Home() {
     };
   }, [activeCategory, fetchNews, fetchMarkets, warDay]);
 
+  // AI-дайджест: одне речення з поточних заголовків
+  useEffect(() => {
+    if (news.length < 3) {
+      setDigest(null);
+      return;
+    }
+    const headlines = news.slice(0, 10).map((n) => n.title);
+    setDigestLoading(true);
+    setDigest(null);
+    fetch('/api/digest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ headlines }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.digest) setDigest(data.digest);
+      })
+      .catch(() => {})
+      .finally(() => setDigestLoading(false));
+  }, [activeCategory, news.length, news.slice(0, 5).map((n) => n.title).join('|')]);
+
   return (
     <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-clip`}>
       
@@ -337,35 +361,52 @@ export default function Home() {
           <aside className="lg:col-span-4 min-w-0">
             <div className={`p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
-                    {/* Карта тривог — посилання (iframe часто блокується або не завантажується) */}
-                    <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800 bg-[#09090b] p-3 shadow-lg">
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
-                          </span>
-                          <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                            Карта тривог
-                          </h3>
-                        </div>
-                        <span className="text-[9px] text-zinc-600 font-mono">LIVE</span>
-                      </div>
+                    {/* Ресурси — офіційні держ установ та сервіси */}
+                    <div className="border-b border-zinc-800 pb-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3">Офіційні джерела</p>
+                      <nav className="flex flex-col gap-1">
+                        <a href="https://alerts.in.ua/lite" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                          Карта тривог
+                        </a>
+                        <a href="https://www.bank.gov.ua/ua" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                          НБУ
+                        </a>
+                        <a href="https://www.kmu.gov.ua" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                          Уряд України
+                        </a>
+                        <a href="https://t.me/lightnews13" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                          Telegram
+                        </a>
+                      </nav>
+                    </div>
 
-                      <a
-                        href="https://alerts.in.ua/lite"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative flex w-full aspect-square rounded-lg overflow-hidden border border-zinc-900 bg-gradient-to-b from-zinc-800/80 to-zinc-900 group"
-                      >
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
-                          <span className="text-zinc-500 group-hover:text-red-500 transition-colors text-4xl" aria-hidden>🗺️</span>
-                          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
-                            Відкрити карту тривог
-                          </span>
-                          <span className="text-[8px] text-zinc-600">alerts.in.ua (lite)</span>
-                        </div>
-                      </a>
+                    {/* Що в фокусі — AI-дайджест одним реченням */}
+                    <div className="rounded-xl overflow-hidden border border-zinc-800 bg-[#0a0a0c] p-4 shadow-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[10px] font-black uppercase tracking-wider text-blue-500">
+                          Що в фокусі
+                        </h3>
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" aria-hidden />
+                      </div>
+                      {digestLoading && (
+                        <p className="text-[11px] text-zinc-500 italic">Формуємо дайджест…</p>
+                      )}
+                      {!digestLoading && digest && (
+                        <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                          {digest}
+                        </p>
+                      )}
+                      {!digestLoading && !digest && news.length >= 3 && (
+                        <p className="text-[11px] text-zinc-500 italic">Не вдалося зформивати дайджест.</p>
+                      )}
+                      {!digestLoading && !digest && news.length < 3 && (
+                        <p className="text-[11px] text-zinc-500 italic">Завантажте новини для дайджесту.</p>
+                      )}
+                      {digest && (
+                        <p className="text-[10px] text-zinc-600 mt-2 italic">
+                          На основі {Math.min(10, news.length)} джерел
+                        </p>
+                      )}
                     </div>
 
                     <div className="pt-6 border-t border-red-600/20 space-y-4">
