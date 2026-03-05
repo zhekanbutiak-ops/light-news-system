@@ -38,7 +38,8 @@ export default function Home() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [newAdText, setNewAdText] = useState("");
-  const [stats, setStats] = useState({ online: 124, today: 4850, total: 128430 });
+  const [stats, setStats] = useState({ online: null as number | null, today: 4850, total: 128430 });
+  const visitorIdRef = React.useRef<string | null>(null);
   const [tensionLevel, setTensionLevel] = useState(4);
   const [tensionLabel, setTensionLabel] = useState("Стабільно");
 
@@ -196,9 +197,6 @@ export default function Home() {
         if (typeof t === 'number') setWeather(prev => ({ ...prev, temp: Math.round(t) }));
       } catch (_) { /* погода опційно */ }
     })();
-    const statsInterval = setInterval(() => {
-        setStats(prev => ({ ...prev, online: prev.online + (Math.random() > 0.5 ? 1 : -1) }));
-    }, 5000);
     // Авто-оновлення новин кожні 5 хвилин
     const newsInterval = setInterval(() => fetchNews(activeCategory), 5 * 60 * 1000);
 
@@ -209,11 +207,42 @@ export default function Home() {
 
     return () => {
         clearInterval(clock);
-        clearInterval(statsInterval);
         clearInterval(newsInterval);
         window.removeEventListener("scroll", handleScroll);
     };
   }, [activeCategory, fetchNews, fetchMarkets, warDay]);
+
+  // Унікальний id відвідувача (один раз при монті)
+  useEffect(() => {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) visitorIdRef.current = crypto.randomUUID();
+  }, []);
+
+  // Пульс "я на сайті" кожні 50 с (для підрахунку онлайн)
+  useEffect(() => {
+    const id = visitorIdRef.current;
+    if (!id) return;
+    const sendPulse = () => {
+      fetch("/api/online", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).catch(() => {});
+    };
+    sendPulse();
+    const t = setInterval(sendPulse, 50 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Отримуємо кількість онлайн з API кожні 25 с
+  useEffect(() => {
+    const fetchOnline = () => {
+      fetch("/api/online")
+        .then((r) => r.json())
+        .then((data) => {
+          if (typeof data?.online === "number") setStats((prev) => ({ ...prev, online: data.online }));
+        })
+        .catch(() => {});
+    };
+    fetchOnline();
+    const t = setInterval(fetchOnline, 25 * 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // AI-дайджест: одне речення з поточних заголовків
   useEffect(() => {
@@ -465,7 +494,7 @@ export default function Home() {
 
               <div className="flex flex-col items-center md:items-end gap-2 text-right">
                   <div className="flex gap-4 mb-2">
-                      <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Online</p><p className="text-xs font-black text-green-500">{stats.online}</p></div>
+                      <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Online</p><p className="text-xs font-black text-green-500">{stats.online !== null ? stats.online : "—"}</p></div>
                       <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Today</p><p className="text-xs font-black">{stats.today}</p></div>
                       <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Total</p><p className="text-xs font-black opacity-60">{stats.total}</p></div>
                   </div>

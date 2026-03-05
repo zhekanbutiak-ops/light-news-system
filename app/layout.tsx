@@ -13,28 +13,48 @@ const geistMono = Geist_Mono({
   subsets: ["latin", "cyrillic"], // Додали кирилицю
 });
 
-// ТВОЇ SEO МЕТАТЕГИ
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://light-fast.com.ua";
+
+// SEO для Google та соцмереж
 export const metadata: Metadata = {
-  title: "LIGHT FAST | Швидкі новини України та LIGHT AI",
-  description: "Перша автономна інформаційна екосистема України. Швидкі новини, курси валют, крипто-моніторинг та інтелектуальний пошук LIGHT AI.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Light News | Новини України — головне, фронт, економіка, світ",
+    template: "%s | Light News",
+  },
+  description:
+    "Актуальні новини України: головні події, фронт, економіка, світ. Курси валют, карта тривог, дайджест за хвилину. Офіційні джерела НБУ та Уряду.",
   keywords: [
-    "швидкі новини України", 
-    "Light AI", 
-    "новини криптo", 
-    "курс долара онлайн", 
-    "авто новини", 
-    "технології", 
-    "LIGHT FAST"
+    "новини України",
+    "головні новини",
+    "новини фронт",
+    "економіка України",
+    "курс долара",
+    "курс НБУ",
+    "карта тривог",
+    "Light News",
   ],
-  authors: [{ name: "LIGHT SYSTEM" }],
+  authors: [{ name: "Light News", url: siteUrl }],
+  creator: "Light News",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   openGraph: {
-    title: "LIGHT FAST | Global Terminal",
-    description: "Будь на крок попереду з автономною системою LIGHT.",
-    url: "https://light-fast.com.ua", // Потім заміниш на свій домен
-    siteName: "LIGHT NEWS",
+    title: "Light News | Новини України",
+    description: "Актуальні новини України: головне, фронт, економіка, світ. Курси валют, офіційні джерела.",
+    url: siteUrl,
+    siteName: "Light News",
     locale: "uk_UA",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Light News | Новини України",
+    description: "Актуальні новини України: головне, фронт, економіка, світ.",
+  },
+  alternates: { canonical: siteUrl },
 };
 
 export const viewport = {
