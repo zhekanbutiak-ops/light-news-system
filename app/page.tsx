@@ -216,7 +216,7 @@ export default function Home() {
   }, [activeCategory, fetchNews, fetchMarkets, warDay]);
 
   return (
-    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-hidden`}>
+    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-clip`}>
       
       {showAboutModal && (
         <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 backdrop-blur-3xl bg-black/60">
@@ -236,8 +236,8 @@ export default function Home() {
       <div className="sticky top-0 z-[1000] w-full pt-[env(safe-area-inset-top)]">
         <div className={`overflow-hidden transition-all duration-300 ease-out ${headerCollapsed ? 'max-h-0 opacity-0 py-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black text-[9px] tracking-[0.15em] backdrop-blur-md`}>
           <div className="py-2.5">
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex justify-between items-center flex-wrap gap-x-4 sm:gap-x-6 gap-y-1">
-                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex justify-between items-center flex-wrap gap-x-3 sm:gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2 sm:gap-4 flex-wrap min-w-0">
                     {dateLine && <span className="uppercase">{dateLine}</span>}
                     <span>${markets.usd.toFixed(2)}</span>
                     <span>€{markets.eur.toFixed(2)}</span>
@@ -264,16 +264,16 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-2 border-b overflow-hidden backdrop-blur-md`}>
+        <div className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-2.5 sm:py-2 border-b overflow-hidden backdrop-blur-md px-2 sm:px-0`}>
             <div className="marquee-container flex whitespace-nowrap">
                 <div className="animate-marquee flex">
-                    {poems.concat(poems).map((poem, index) => <span key={index} className="mx-10 text-[9px] font-bold uppercase italic">{poem}</span>)}
+                    {poems.concat(poems).map((poem, index) => <span key={index} className="mx-6 sm:mx-10 text-[8px] sm:text-[9px] font-bold uppercase italic">{poem}</span>)}
                 </div>
             </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-3 sm:py-4 border-b backdrop-blur-md`}>
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-6">
+        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-4 sm:py-4 border-b backdrop-blur-md`}>
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
                 <div className="flex items-center justify-center sm:justify-start shrink-0">
                     <a href="/" className="flex items-center gap-2 group min-h-[44px]">
                         <span className={`text-xl sm:text-2xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
@@ -281,18 +281,18 @@ export default function Home() {
                         </span>
                     </a>
                 </div>
-                <nav className="flex justify-center flex-wrap gap-2 md:gap-4">
+                <nav className="flex justify-center flex-wrap gap-2 md:gap-4 w-full min-w-0 shrink">
                     {CATEGORIES.map(({ value, label, icon }) => (
                         <button
                             key={value}
                             onClick={() => setActiveCategory(value)}
-                            className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-3 sm:px-4 py-2.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all touch-manipulation ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
+                            className={`inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-2 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest transition-all touch-manipulation shrink-0 ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
                         >
-                            <span className="opacity-90">{icon}</span>
-                            <span>{label}</span>
+                            <span className="opacity-90 shrink-0">{icon}</span>
+                            <span className="whitespace-nowrap">{label}</span>
                         </button>
                     ))}
-                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-2 min-h-[44px] px-3 sm:px-4 py-2.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation">Про нас</button>
+                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-2 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Про нас</button>
                 </nav>
                 <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-4 shrink-0">
                     {session ? (
@@ -329,9 +329,9 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full min-w-0">
-        <div className="grid lg:grid-cols-12 gap-8 sm:gap-16">
-          <div className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0">
+      <main className="max-w-[1440px] mx-auto px-5 sm:px-6 py-10 sm:py-12 w-full min-w-0">
+        <div className="grid lg:grid-cols-12 gap-10 sm:gap-16">
+          <div className="lg:col-span-8 space-y-12 sm:space-y-16 min-w-0">
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start min-w-0">
@@ -347,13 +347,13 @@ export default function Home() {
               ))
             ) : (
               news.map((item) => (
-                <article key={item.id} className="group flex flex-col md:flex-row gap-6 sm:gap-8 items-start min-w-0">
+                <article key={item.id} className="group flex flex-col md:flex-row gap-5 sm:gap-8 items-start min-w-0">
                   <div className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800 rounded-xl sm:rounded-[2rem] overflow-hidden shrink-0 shadow-xl">
                     <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="" />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-red-600 font-black text-[9px] uppercase mb-2">{item.time} / {activeCategory}</span>
-                    <h2 className="text-lg sm:text-2xl font-[1000] leading-tight tracking-tighter mb-3 sm:mb-4 uppercase italic"><a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline">{item.title}</a></h2>
+                    <h2 className="text-base sm:text-2xl font-[1000] leading-snug sm:leading-tight tracking-tighter mb-3 sm:mb-4 uppercase italic"><a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline">{item.title}</a></h2>
                     <p className="text-xs sm:text-sm opacity-50 italic line-clamp-2 leading-relaxed">{item.content}</p>
                   </div>
                 </article>
