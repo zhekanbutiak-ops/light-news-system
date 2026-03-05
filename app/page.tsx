@@ -344,7 +344,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Віджет Мапи Тривог */}
+                    {/* Карта тривог — посилання (iframe часто блокується або не завантажується) */}
                     <div className="mt-4 rounded-xl overflow-hidden border border-zinc-800 bg-[#09090b] p-3 shadow-lg">
                       <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2">
@@ -356,28 +356,23 @@ export default function Home() {
                             Карта тривог
                           </h3>
                         </div>
-                        <div className="text-[9px] text-zinc-600 font-mono">LIVE</div>
+                        <span className="text-[9px] text-zinc-600 font-mono">LIVE</span>
                       </div>
 
-                      <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-zinc-900">
-                        <iframe 
-                          src="https://alerts.in.ua/res/pwa.html" 
-                          className="absolute inset-0 w-full h-full border-0 opacity-95 hover:opacity-100 transition-opacity duration-500 scale-[1.05]"
-                          style={{ colorScheme: 'dark' }}
-                          title="Alerts Map"
-                        />
-                      </div>
-
-                      <div className="mt-2 px-1">
-                        <a
-                          href="https://alerts.in.ua/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[8px] text-zinc-700 hover:text-zinc-500 transition-colors block text-center uppercase tracking-tighter"
-                        >
-                          Джерело: alerts.in.ua
-                        </a>
-                      </div>
+                      <a
+                        href="https://alerts.in.ua/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative flex w-full aspect-square rounded-lg overflow-hidden border border-zinc-900 bg-gradient-to-b from-zinc-800/80 to-zinc-900 group"
+                      >
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                          <span className="text-zinc-500 group-hover:text-red-500 transition-colors text-4xl" aria-hidden>🗺️</span>
+                          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
+                            Відкрити карту тривог
+                          </span>
+                          <span className="text-[8px] text-zinc-600">alerts.in.ua</span>
+                        </div>
+                      </a>
                     </div>
 
                     <div className="pt-6 border-t border-red-600/20 space-y-4">
