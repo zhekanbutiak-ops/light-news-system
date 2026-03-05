@@ -5,7 +5,7 @@ import Parser from 'rss-parser';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const parser = new Parser();
 
-// Список різних джерел для різноманітності
+// Звичайні новинні джерела
 const SOURCES = [
   { name: "🌍 СВІТ", url: "https://tsn.ua/rss/svit.rss" },
   { name: "💰 ЕКОНОМІКА", url: "https://tsn.ua/rss/groshi.rss" },
@@ -20,15 +20,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. Обираємо випадкове джерело
+    // Тільки новини з сайту (RSS) — кожні 15 хв одна публікація
     const source = SOURCES[Math.floor(Math.random() * SOURCES.length)];
     const feed = await parser.parseURL(source.url);
     const latestNews = feed.items[0];
 
     if (!latestNews) return NextResponse.json({ error: "No news" });
 
-    // 2. Запит до ШІ тільки для опису (заголовок з парсера — без змін)
-    const originalTitle = latestNews.title;
+    const originalTitle = latestNews.title ?? "";
     const originalText = latestNews.contentSnippet || latestNews.content || "";
 
     const completion = await groq.chat.completions.create({
@@ -46,8 +45,6 @@ export async function GET(req: NextRequest) {
     });
 
     const aiDescription = completion.choices[0]?.message?.content || "Опис недоступний";
-
-    // 3. Повідомлення: оригінальний заголовок + AI-опис + посилання
     const message = `<b>${source.name}</b>\n\n<b>${originalTitle}</b>\n\n${aiDescription}\n\n👉 <a href="${latestNews.link}">Читати повністю</a>`;
 
     const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

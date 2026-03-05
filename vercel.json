@@ -3,6 +3,10 @@
     {
       "path": "/api/auto-publish",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/auto-publish-threats",
+      "schedule": "*/2 * * * *"
     }
   ]
 }
