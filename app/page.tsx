@@ -270,8 +270,8 @@ export default function Home() {
             </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-5 sm:py-4 border-b backdrop-blur-md`}>
-            <div className="max-w-[1440px] mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5 sm:gap-6">
+        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-4 sm:py-4 border-b backdrop-blur-md`}>
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
                 <div className="flex items-center justify-center sm:justify-start shrink-0">
                     <a href="/" className="flex items-center gap-2 group min-h-[44px]">
                         <span className={`text-xl sm:text-2xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
@@ -279,18 +279,21 @@ export default function Home() {
                         </span>
                     </a>
                 </div>
-                <nav className="flex justify-center flex-wrap gap-2 md:gap-4 w-full min-w-0 shrink">
+                {/* На мобільній — горизонтальний скрол, більше відступи й шрифт */}
+                <nav className="flex justify-center sm:flex-wrap gap-3 md:gap-4 w-full min-w-0 shrink overflow-x-auto overflow-y-hidden sm:overflow-visible py-1 -mx-2 sm:mx-0 px-2 sm:px-0 scrollbar-hide">
+                    <div className="flex sm:flex-wrap items-center gap-3 md:gap-4 min-w-max sm:min-w-0 justify-start sm:justify-center">
                     {CATEGORIES.map(({ value, label, icon }) => (
                         <button
                             key={value}
                             onClick={() => setActiveCategory(value)}
-                            className={`inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[48px] sm:min-h-[44px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest transition-all touch-manipulation shrink-0 ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
+                            className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[52px] sm:min-h-[44px] px-4 sm:px-4 py-3 sm:py-2 rounded-full text-[10px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest transition-all touch-manipulation shrink-0 snap-start ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
                         >
                             <span className="opacity-90 shrink-0">{icon}</span>
                             <span className="whitespace-nowrap">{label}</span>
                         </button>
                     ))}
-                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[48px] sm:min-h-[44px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Про нас</button>
+                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[52px] sm:min-h-[44px] px-4 sm:px-4 py-3 sm:py-2 rounded-full text-[10px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap snap-start">Про нас</button>
+                    </div>
                 </nav>
             </div>
         </div>
@@ -447,6 +450,8 @@ export default function Home() {
         @keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         .animate-marquee { display: flex; animation: marquee 400s linear infinite; width: max-content; }
         .marquee-container { overflow: hidden; width: 100%; display: flex; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
