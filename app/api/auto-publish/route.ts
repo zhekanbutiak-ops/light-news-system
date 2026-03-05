@@ -5,6 +5,18 @@ import Parser from 'rss-parser';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const parser = new Parser();
 
+const KV_KEY_LAST_LINK = "ln_autopublish_last";
+
+async function getKV() {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  try {
+    const { kv } = await import("@vercel/kv");
+    return kv;
+  } catch {
+    return null;
+  }
+}
+
 // Звичайні новинні джерела
 const SOURCES = [
   { name: "🌍 СВІТ", url: "https://tsn.ua/rss/svit.rss" },
@@ -20,11 +32,28 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Тільки новини з сайту (RSS) — кожні 15 хв одна публікація
-    const source = SOURCES[Math.floor(Math.random() * SOURCES.length)];
-    const feed = await parser.parseURL(source.url);
-    const latestNews = feed.items[0];
+    const kv = await getKV();
+    // Перемішуємо джерела, щоб не публікувати ту саму новину з різних розділів
+    const shuffled = [...SOURCES].sort(() => Math.random() - 0.5);
+    let source = shuffled[0];
+    let feed = await parser.parseURL(source.url);
+    let latestNews = feed.items[0];
 
+    if (!latestNews) return NextResponse.json({ error: "No news" });
+
+    if (kv) {
+      const lastLink = (await kv.get(KV_KEY_LAST_LINK)) as string | null;
+      let tries = 0;
+      while (latestNews?.link && latestNews.link === lastLink && tries < SOURCES.length) {
+        tries++;
+        source = shuffled[tries % shuffled.length];
+        feed = await parser.parseURL(source.url);
+        latestNews = feed.items[0];
+      }
+      if (latestNews?.link && latestNews.link === lastLink) {
+        return NextResponse.json({ skipped: true, reason: "all latest already posted" });
+      }
+    }
     if (!latestNews) return NextResponse.json({ error: "No news" });
 
     const originalTitle = latestNews.title ?? "";
@@ -66,6 +95,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    if (kv && latestNews.link) await kv.set(KV_KEY_LAST_LINK, latestNews.link);
     return NextResponse.json({ success: true, category: source.name, posted: originalTitle });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Error";

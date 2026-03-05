@@ -35,8 +35,8 @@ const THREAT_SOURCES = [
   { name: "⚠️ ППО UA РАДАР", url: "https://ch2rss.fflow.net/PpoUaRadar1" },
 ];
 
-// Без KV: пост вважаємо "новим" якщо не старіший за N хв (RSS ch2rss часто має затримку 3–5 хв)
-const NEW_POST_WINDOW_MS = 10 * 60 * 1000;
+// Без KV: дуже вузьке вікно (90 с), щоб не публікувати той самий пост кілька разів. Краще налаштувати KV.
+const NEW_POST_WINDOW_MS = 90 * 1000;
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
         const pubDate = latest.pubDate ? new Date(latest.pubDate).getTime() : 0;
         const now = Date.now();
         if (now - pubDate > NEW_POST_WINDOW_MS) {
-          results.push({ source: source.name, reason: "not new (older than 10 min, add KV for reliable detection)" });
+          results.push({ source: source.name, reason: "not new (without KV use 90s window; add KV_REST_* to avoid duplicates)" });
           continue;
         }
       }
