@@ -101,13 +101,22 @@ export async function GET(req: NextRequest) {
       const title = stripChannelSignature(latest.title ?? "");
       const rawContent = latest.contentSnippet || latest.content || "";
       const cleaned = stripChannelSignature(rawContent);
-      const trimmed = cleaned.slice(0, 400).trim();
-      // Якщо опис той самий що й заголовок (або майже той самий) — не дублюємо текст у пості
+      const trimmed = cleaned.slice(0, 500).trim();
       const titleN = norm(title);
       const bodyN = norm(trimmed);
-      const sameOrAlmost = !bodyN || bodyN === titleN || (bodyN.startsWith(titleN) && bodyN.length - titleN.length < 25);
-      const body = sameOrAlmost ? "" : (trimmed ? `\n\n${trimmed}${cleaned.length > 400 ? "…" : ""}` : "");
-      const message = title ? `<b>${title}</b>${body}` : (trimmed || "—");
+      // Один блок тексту: якщо опис містить заголовок (або навпаки) — публікуємо тільки довший, без дубля
+      let message: string;
+      if (!bodyN) {
+        message = title ? `<b>${title}</b>` : "—";
+      } else if (!titleN) {
+        message = trimmed;
+      } else if (bodyN.includes(titleN) || titleN.includes(bodyN)) {
+        message = bodyN.length >= titleN.length ? trimmed : title;
+      } else if (bodyN === titleN || (bodyN.startsWith(titleN) && bodyN.length - titleN.length < 30)) {
+        message = title;
+      } else {
+        message = `<b>${title}</b>\n\n${trimmed}${cleaned.length > 500 ? "…" : ""}`;
+      }
 
       const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
