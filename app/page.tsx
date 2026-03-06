@@ -189,12 +189,13 @@ export default function Home() {
     };
     updateClock();
     const clock = setInterval(updateClock, 1000);
+    // Гістерезис: згортати лише після 160px, розгортати лише нижче 50px — щоб панель не стрибала при одному прокруті
     const handleScroll = () => {
       const y = window.scrollY;
-      setHeaderCollapsed((prev) => (y > 100 ? true : y < 60 ? false : prev));
+      setHeaderCollapsed((prev) => (y > 160 ? true : y < 50 ? false : prev));
       setShowBackToTop(y > 400);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     (async () => {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.45&longitude=30.52&current=temperature_2m&timezone=Europe/Kyiv');
