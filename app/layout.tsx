@@ -15,6 +15,33 @@ const geistMono = Geist_Mono({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://light-fast.com.ua";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      url: siteUrl,
+      name: "Light News",
+      description: "Актуальні новини України: головні події, фронт, економіка, світ. Курси валют, карта тривог, дайджест.",
+      inLanguage: "uk-UA",
+      publisher: { "@id": `${siteUrl}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/?q={search_term_string}` },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "Light News",
+      url: siteUrl,
+      logo: { "@type": "ImageObject", url: `${siteUrl}/images/logo.png` },
+    },
+  ],
+};
+
 // SEO для Google та соцмереж
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -48,6 +75,7 @@ export const metadata: Metadata = {
     siteName: "Light News",
     locale: "uk_UA",
     type: "website",
+    images: [{ url: "/images/logo.png", width: 1200, height: 630, alt: "Light News" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -74,6 +102,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

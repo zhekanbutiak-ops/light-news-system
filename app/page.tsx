@@ -164,6 +164,7 @@ export default function Home() {
         setNews(items.map((item: any, index: number) => ({
           id: `${category}-${index}-${Date.now()}`,
           time: item.pubDate ? new Date(item.pubDate).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }) : "--:--",
+          pubDateIso: item.pubDate ? new Date(item.pubDate).toISOString() : null,
           title: item.title,
           link: item.link,
           content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
@@ -410,7 +411,7 @@ export default function Home() {
         <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-2 sm:py-2.5 border-b backdrop-blur-md transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
             <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4">
                 <div className="flex items-center justify-center sm:justify-start shrink-0">
-                    <a href="/" className="flex items-center gap-1.5 group min-h-[36px] sm:min-h-[38px] py-1">
+                    <a href="/" className="flex items-center gap-1.5 group min-h-[36px] sm:min-h-[38px] py-1" aria-label="Light News — на головну">
                         <span className={`text-lg sm:text-xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
                             Light<span className="text-blue-600">News</span>
                         </span>
@@ -439,6 +440,7 @@ export default function Home() {
       <main className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0 overflow-x-hidden">
         <div className="grid lg:grid-cols-12 gap-8 sm:gap-16 min-w-0">
           <div className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0">
+            <h1 className="sr-only">Головні новини України — Light News: фронт, економіка, світ</h1>
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
@@ -465,7 +467,9 @@ export default function Home() {
                     )}
                   </a>
                   <div className="flex flex-col min-w-0 flex-1 w-full">
-                    <span className="text-red-600 font-black text-[11px] sm:text-[10px] uppercase mb-2">{item.time} / {activeCategory}</span>
+                    <span className="text-red-600 font-black text-[11px] sm:text-[10px] uppercase mb-2">
+                      {item.pubDateIso ? <time dateTime={item.pubDateIso}>{item.time}</time> : item.time} / {activeCategory}
+                    </span>
                     <h2 className="text-base sm:text-2xl font-[1000] leading-snug sm:leading-tight tracking-tight sm:tracking-tighter mb-3 sm:mb-4 uppercase italic">
                       <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline active:opacity-80 block py-1 -my-1">
                         {item.title}

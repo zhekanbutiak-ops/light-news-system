@@ -96,29 +96,30 @@ function getFallbackImageUrl(itemLink?: string): string {
 }
 
 // Джерела з зображеннями в RSS (enclosure або <img> в контенті): TSN, UNIAN, РБК, Правда, LB.ua, АрміяInform
+// УНІАН: старі www.unian.ua/rss/* повертають 404, використовуємо rss.unian.net (українська стрічка)
 const RSS_CONFIG: Record<string, string[]> = {
   "Головне": [
     "https://tsn.ua/rss/full.rss",
-    "https://www.unian.ua/rss/common.rss",
+    "https://rss.unian.net/site/news_ukr.rss",
     "https://www.rbc.ua/static/rss/all.ukr.rss.xml"
   ],
   "🛡️ Фронт": [
     "https://tsn.ua/rss/ato.rss",
-    "https://www.unian.ua/rss/war.rss",
+    "https://rss.unian.net/site/news_ukr.rss",
     "https://armyinform.com.ua/feed/"
   ],
   "🇺🇦 Україна": [
-    "https://www.unian.ua/rss/politics.rss",
+    "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/ukrayina.rss",
     "https://lb.ua/rss/ukr/feed.xml"
   ],
   "🌍 Світ": [
-    "https://www.unian.ua/rss/world.rss",
+    "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/svit.rss",
     "https://rss.dw.com/rss-ukr-all"
   ],
   "💰 Економіка": [
-    "https://www.unian.ua/rss/economics.rss",
+    "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/groshi.rss",
     "https://epravda.com.ua/rss/news/"
   ],
