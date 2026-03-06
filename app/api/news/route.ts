@@ -125,7 +125,7 @@ export async function GET(request: Request) {
     // Додаємо URL зображення з enclosure або з контенту (без випадкових picsum)
     const itemsWithImage = uniqueItems.slice(0, 30).map((item) => ({
       ...item,
-      imageUrl: getImageUrl(item as Parameters<typeof getImageUrl>[0], item.link) || null,
+      imageUrl: getImageUrl(item as unknown as Parameters<typeof getImageUrl>[0], item.link) || null,
     }));
 
     return NextResponse.json({ items: itemsWithImage });
