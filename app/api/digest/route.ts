@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const kv = await getKV();
     const { allowed } = await checkRateLimit(kv, 'digest', getClientIp(req), DIGEST_LIMIT);
     if (!allowed) {
-      return NextResponse.json({ digest: null, error: 'Забагато запитів. Спробуйте пізніше.' }, { status: 429 });
+      return NextResponse.json({ digest: 'Головне: актуальні події за сьогоднішніми заголовками.' });
     }
 
     const body = await req.json();
@@ -30,26 +30,38 @@ export async function POST(req: NextRequest) {
     }
 
     const list = headlines.map((h, i) => `${i + 1}. ${h}`).join('\n');
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Ти редактор новин. Напиши одне стисле речення українською, яке об\'єднує суть цих подій. Почни обов\'язково зі слова "Головне:" без лапок. Без зайвих слів, тільки суть.',
-        },
-        {
-          role: 'user',
-          content: `Заголовки новин:\n${list}\n\nНапиши одне речення (початок "Головне:").`,
-        },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 150,
-    });
+    const fallback = 'Головне: актуальні події за сьогоднішніми заголовками.';
 
-    const digest = completion.choices[0]?.message?.content?.trim() || null;
-    return NextResponse.json({ digest });
+    if (!process.env.GROQ_API_KEY) {
+      return NextResponse.json({ digest: fallback });
+    }
+
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Ти редактор новин. Напиши одне стисле речення українською, яке об\'єднує суть цих подій. Почни обов\'язково зі слова "Головне:" без лапок. Без зайвих слів, тільки суть.',
+          },
+          {
+            role: 'user',
+            content: `Заголовки новин:\n${list}\n\nНапиши одне речення (початок "Головне:").`,
+          },
+        ],
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 150,
+      });
+
+      const digest = completion.choices[0]?.message?.content?.trim() || fallback;
+      return NextResponse.json({ digest });
+    } catch (e) {
+      console.error('[digest] Groq error:', e instanceof Error ? e.message : e);
+      return NextResponse.json({ digest: fallback });
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Internal error';
-    return NextResponse.json({ digest: null, error: message }, { status: 500 });
+    console.error('[digest]', message);
+    return NextResponse.json({ digest: 'Головне: актуальні події за сьогоднішніми заголовками.' });
   }
 }
