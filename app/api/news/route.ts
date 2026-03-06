@@ -2,17 +2,46 @@ import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
 
-const parser = new Parser();
+// content:encoded для АрміяInform та інших WordPress-фідів (зображення в HTML)
+const parser = new Parser({
+  customFields: {
+    item: [['content:encoded', 'contentEncoded']],
+  },
+});
 
-/** Витягує URL зображення: спочатку enclosure, потім перше <img> з HTML контенту */
-function getImageUrl(item: { enclosure?: { url?: string }; content?: string; contentEncoded?: string; description?: string }, link?: string): string | null {
+/** Витягує URL зображення: enclosure → media:* → перше <img> з HTML (для АрміяInform тощо); повний розмір з <a href> якщо є */
+function getImageUrl(item: { enclosure?: { url?: string }; content?: string; contentEncoded?: string; description?: string; [k: string]: unknown }, link?: string): string | null {
   const enc = item.enclosure?.url;
   if (enc && enc.startsWith('http')) return enc.startsWith('http://') ? enc.replace('http://', 'https://') : enc;
-  const html = [item.contentEncoded, item.content, item.description].find(Boolean) as string | undefined;
+  // media:content / media:thumbnail (деякі фіди, напр. WordPress з плагінами)
+  const mediaContent = item['media:content'] ?? item.mediaContent;
+  const mediaThumb = item['media:thumbnail'] ?? item.mediaThumbnail;
+  const mediaUrl = typeof mediaContent === 'object' && mediaContent !== null && 'url' in mediaContent
+    ? (mediaContent as { url?: string }).url
+    : typeof mediaContent === 'string'
+      ? mediaContent
+      : null;
+  if (mediaUrl && mediaUrl.startsWith('http')) return mediaUrl.startsWith('http://') ? mediaUrl.replace('http://', 'https://') : mediaUrl;
+  const thumbUrl = typeof mediaThumb === 'object' && mediaThumb !== null && 'url' in mediaThumb
+    ? (mediaThumb as { url?: string }).url
+    : typeof mediaThumb === 'string'
+      ? mediaThumb
+      : null;
+  if (thumbUrl && thumbUrl.startsWith('http')) return thumbUrl.startsWith('http://') ? thumbUrl.replace('http://', 'https://') : thumbUrl;
+  // HTML контент (АрміяInform: content:encoded з <img> та <a href="...jpg">)
+  const rawEncoded = item['content:encoded'] ?? item.contentEncoded;
+  const html = [rawEncoded, item.content, item.description].find(Boolean) as string | undefined;
   if (!html || typeof html !== 'string') return null;
   try {
     const $ = cheerio.load(html);
-    const src = $('img').first().attr('src');
+    const firstImg = $('img').first();
+    if (!firstImg.length) return null;
+    // Якщо img всередині <a href="...jpg/.png"> — беремо повний розмір з посилання (АрміяInform)
+    const parentA = firstImg.closest('a');
+    const aHref = parentA.length ? parentA.attr('href') : null;
+    if (aHref && /\.(jpe?g|png|webp)(\?|$)/i.test(aHref))
+      return aHref.startsWith('http') ? (aHref.startsWith('http://') ? aHref.replace('http://', 'https://') : aHref) : (link ? new URL(aHref, new URL(link).origin).href : null);
+    const src = firstImg.attr('src');
     if (!src) return null;
     if (src.startsWith('http')) return src.startsWith('http://') ? src.replace('http://', 'https://') : src;
     if (link) {

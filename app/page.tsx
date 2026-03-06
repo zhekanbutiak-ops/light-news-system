@@ -25,6 +25,12 @@ export default function Home() {
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [activeCategory, setActiveCategory] = useState("Головне");
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showSendNewsModal, setShowSendNewsModal] = useState(false);
+  const [sendNewsTitle, setSendNewsTitle] = useState("");
+  const [sendNewsText, setSendNewsText] = useState("");
+  const [sendNewsLink, setSendNewsLink] = useState("");
+  const [sendNewsLoading, setSendNewsLoading] = useState(false);
+  const [sendNewsResult, setSendNewsResult] = useState<"ok" | "error" | null>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -185,7 +191,7 @@ export default function Home() {
     const clock = setInterval(updateClock, 1000);
     const handleScroll = () => {
       const y = window.scrollY;
-      setHeaderCollapsed(y > 100);
+      setHeaderCollapsed((prev) => (y > 100 ? true : y < 60 ? false : prev));
       setShowBackToTop(y > 400);
     };
     window.addEventListener("scroll", handleScroll);
@@ -283,9 +289,73 @@ export default function Home() {
         </div>
       )}
 
-      {/* HEADER SYSTEM: верхня смуга ховається при скролі, вірші + пункти залишаються */}
+      {showSendNewsModal && (
+        <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-3xl bg-black/60" onClick={() => !sendNewsLoading && setShowSendNewsModal(false)}>
+          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`} onClick={e => e.stopPropagation()}>
+            <div className="absolute top-0 left-0 w-full h-2 bg-blue-600 rounded-t-[2rem] sm:rounded-none"></div>
+            <h2 className="text-2xl sm:text-3xl font-[1000] italic uppercase tracking-tighter mb-2">Надіслати <span className="text-blue-600">новину</span></h2>
+            <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Пропонована новина потрапить до адміна в Telegram. Заповніть заголовок або текст (посилання — за бажанням).</p>
+            {sendNewsResult === "ok" ? (
+              <div className="py-6 text-center">
+                <p className="text-green-600 font-bold text-sm mb-4">Повідомлення надіслано. Дякуємо!</p>
+                <button type="button" onClick={() => { setShowSendNewsModal(false); setSendNewsResult(null); setSendNewsTitle(""); setSendNewsText(""); setSendNewsLink(""); }} className="w-full py-3 min-h-[48px] bg-zinc-600 hover:bg-zinc-500 text-white rounded-xl font-black uppercase text-[11px] tracking-wider">Закрити</button>
+              </div>
+            ) : (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setSendNewsLoading(true);
+                setSendNewsResult(null);
+                try {
+                  const res = await fetch("/api/send-news", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: sendNewsTitle, text: sendNewsText, link: sendNewsLink || undefined }),
+                  });
+                  const data = await res.json().catch(() => ({}));
+                  if (res.ok) setSendNewsResult("ok"); else setSendNewsResult("error");
+                } catch {
+                  setSendNewsResult("error");
+                } finally {
+                  setSendNewsLoading(false);
+                }
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider opacity-80 mb-1.5">Заголовок</label>
+                  <input type="text" value={sendNewsTitle} onChange={e => setSendNewsTitle(e.target.value)} placeholder="Короткий заголовок новини" className={`w-full px-4 py-3 rounded-xl border text-sm min-h-[48px] outline-none transition-colors ${darkMode ? 'bg-zinc-800 border-zinc-700 placeholder:text-zinc-500' : 'bg-zinc-100 border-zinc-200 placeholder:text-zinc-400'}`} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider opacity-80 mb-1.5">Текст (або посилання на джерело)</label>
+                  <textarea value={sendNewsText} onChange={e => setSendNewsText(e.target.value)} placeholder="Опис або посилання" rows={3} className={`w-full px-4 py-3 rounded-xl border text-sm resize-y outline-none transition-colors ${darkMode ? 'bg-zinc-800 border-zinc-700 placeholder:text-zinc-500' : 'bg-zinc-100 border-zinc-200 placeholder:text-zinc-400'}`} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider opacity-80 mb-1.5">Посилання (необов’язково)</label>
+                  <input type="url" value={sendNewsLink} onChange={e => setSendNewsLink(e.target.value)} placeholder="https://..." className={`w-full px-4 py-3 rounded-xl border text-sm min-h-[44px] outline-none transition-colors ${darkMode ? 'bg-zinc-800 border-zinc-700 placeholder:text-zinc-500' : 'bg-zinc-100 border-zinc-200 placeholder:text-zinc-400'}`} />
+                </div>
+                {sendNewsResult === "error" && <p className="text-red-500 text-[11px]">Не вдалося надіслати. Спробуйте пізніше або напишіть у Telegram.</p>}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button type="submit" disabled={sendNewsLoading || (!sendNewsTitle.trim() && !sendNewsText.trim())} className="flex-1 py-4 min-h-[52px] bg-blue-600 text-white rounded-2xl font-black uppercase text-[12px] sm:text-[10px] tracking-widest touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 active:opacity-90">
+                    {sendNewsLoading ? "Надсилання…" : "Надіслати"}
+                  </button>
+                  <button type="button" onClick={() => setShowSendNewsModal(false)} className="py-4 min-h-[52px] px-6 rounded-2xl font-black uppercase text-[11px] border-2 border-zinc-500 text-zinc-500 hover:bg-zinc-500/10 transition-all touch-manipulation">Скасувати</button>
+                </div>
+                {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME && (
+                  <p className="text-[11px] opacity-70 pt-2 border-t border-zinc-700">
+                    Або напишіть напряму в Telegram:{" "}
+                    <a href={`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline font-medium">@{process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}</a>
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* HEADER: плавне приховування верхньої смуги без стрибків нижньої панелі */}
       <div className="sticky top-0 z-[1000] w-full pt-[env(safe-area-inset-top)]">
-        <div className={`overflow-hidden transition-all duration-300 ease-out ${headerCollapsed ? 'max-h-0 opacity-0 py-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black tracking-[0.15em] backdrop-blur-md`}>
+        <div
+          className={`overflow-hidden transition-[max-height,opacity,border-color] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${headerCollapsed ? 'max-h-0 opacity-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black tracking-[0.15em] backdrop-blur-md`}
+          style={{ willChange: headerCollapsed ? 'max-height' : 'auto' }}
+        >
           <div className="py-3 sm:py-2.5">
             <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex justify-between items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 overflow-x-auto scrollbar-hide text-[10px] sm:text-[9px] [scrollbar-width:none] [-ms-overflow-style:none]">
@@ -318,7 +388,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div aria-hidden="true" className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-3 sm:py-2 border-b overflow-hidden backdrop-blur-md pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]`}>
+        <div aria-hidden="true" className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-3 sm:py-2 border-b overflow-hidden backdrop-blur-md pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
             <div className="marquee-container flex whitespace-nowrap">
                 <div className="animate-marquee flex">
                     {poems.concat(poems).map((poem, index) => <span key={index} className="mx-4 sm:mx-10 text-[9px] sm:text-[9px] font-bold uppercase italic">{poem}</span>)}
@@ -326,7 +396,7 @@ export default function Home() {
             </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-4 sm:py-4 border-b backdrop-blur-md`}>
+        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-4 sm:py-4 border-b backdrop-blur-md transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
             <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
                 <div className="flex items-center justify-center sm:justify-start shrink-0">
                     <a href="/" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] py-2">
@@ -348,6 +418,7 @@ export default function Home() {
                             <span className="whitespace-nowrap">{label}</span>
                         </button>
                     ))}
+                    <button onClick={() => setShowSendNewsModal(true)} className="inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[32px] sm:min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap snap-start">Надіслати новину</button>
                     <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[32px] sm:min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap snap-start">Про нас</button>
                     </div>
                 </nav>
