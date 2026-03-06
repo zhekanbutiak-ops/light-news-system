@@ -35,33 +35,44 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
   try {
     const $ = cheerio.load(html);
     const firstImg = $('img').first();
-    if (!firstImg.length) return null;
-    // Джерело: data-src (lazy), srcset (перший URL), потім src
-    let src =
-      firstImg.attr('data-src') ||
-      (() => {
-        const srcset = firstImg.attr('srcset');
-        if (!srcset) return null;
-        const first = srcset.split(',')[0]?.trim().split(/\s+/)[0];
-        return first || null;
-      })() ||
-      firstImg.attr('src');
-    if (!src) return null;
-    // Якщо img всередині <a href="...jpg/.png"> — беремо повний розмір з посилання (АрміяInform)
-    const parentA = firstImg.closest('a');
-    const aHref = parentA.length ? parentA.attr('href') : null;
-    if (aHref && /\.(jpe?g|png|webp)(\?|$)/i.test(aHref)) {
-      const fullA = aHref.startsWith('http') ? (aHref.startsWith('http://') ? aHref.replace('http://', 'https://') : aHref) : (link ? new URL(aHref, new URL(link).origin).href : null);
-      if (fullA) return fullA;
-    }
-    if (src.startsWith('http')) return src.startsWith('http://') ? src.replace('http://', 'https://') : src;
-    if (link) {
-      try {
-        const base = new URL(link);
-        return new URL(src, base.origin).href;
-      } catch {
-        return null;
+    if (firstImg.length) {
+      // Джерело: data-src (lazy), srcset (перший URL), потім src
+      let src =
+        firstImg.attr('data-src') ||
+        (() => {
+          const srcset = firstImg.attr('srcset');
+          if (!srcset) return null;
+          const first = srcset.split(',')[0]?.trim().split(/\s+/)[0];
+          return first || null;
+        })() ||
+        firstImg.attr('src');
+      if (src) {
+        // Якщо img всередині <a href="...jpg/.png"> — беремо повний розмір з посилання (АрміяInform)
+        const parentA = firstImg.closest('a');
+        const aHref = parentA.length ? parentA.attr('href') : null;
+        if (aHref && /\.(jpe?g|png|webp)(\?|$)/i.test(aHref)) {
+          const fullA = aHref.startsWith('http') ? (aHref.startsWith('http://') ? aHref.replace('http://', 'https://') : aHref) : (link ? new URL(aHref, new URL(link).origin).href : null);
+          if (fullA) return fullA;
+        }
+        if (src.startsWith('http')) return src.startsWith('http://') ? src.replace('http://', 'https://') : src;
+        if (link) {
+          try {
+            const base = new URL(link);
+            return new URL(src, base.origin).href;
+          } catch {
+            // fall through to regex search
+          }
+        }
       }
+    }
+    // АрміяInform: якщо з img нічого не вийшло — шукаємо в HTML будь-яке посилання на wp-content/uploads/ (напр. .../2026/03/81.jpg)
+    const fullUrlMatch = html.match(/https?:\/\/[^"'\s]*armyinform\.com\.ua\/wp-content\/uploads\/[^"'\s]+\.(jpe?g|png|webp)(\?[^"'\s]*)?/i);
+    if (fullUrlMatch) return fullUrlMatch[0].startsWith('http://') ? fullUrlMatch[0].replace('http://', 'https://') : fullUrlMatch[0];
+    const attrMatch = html.match(/(?:src|href|data-src)=["']([^"']*\/wp-content\/uploads\/[^"']+\.(?:jpe?g|png|webp)(?:\?[^"']*)?)["']/i);
+    if (attrMatch?.[1]) {
+      let url = attrMatch[1];
+      if (!url.startsWith('http')) url = link ? new URL(url, new URL(link).origin).href : `https://armyinform.com.ua${url.startsWith('/') ? url : '/' + url}`;
+      return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
     }
     return null;
   } catch {
@@ -69,15 +80,15 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
   }
 }
 
-/** Тематичні fallback-зображення: з env або з public/images/ (fallback-news.jpg, fallback-front.jpg) */
+/** Тематичні fallback-зображення: env або public/images/; якщо файлів немає — робочий placeholder, щоб не було сірого блоку */
 function getFallbackImageUrl(itemLink?: string): string {
-  const defaultNews = process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || '/images/fallback-news.jpg';
-  const defaultFront = process.env.NEXT_PUBLIC_FALLBACK_FRONT_IMAGE || '/images/fallback-front.jpg';
+  const defaultNews = process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || 'https://placehold.co/800x450/1a1a2e/c4b5a0?text=Light+News';
+  const defaultFront = process.env.NEXT_PUBLIC_FALLBACK_FRONT_IMAGE || 'https://placehold.co/800x450/2d1b0e/c4b5a0?text=Фронт';
   if (!itemLink) return defaultNews;
   try {
     const host = new URL(itemLink).hostname.toLowerCase();
     if (host.includes('armyinform')) return defaultFront;
-    if (host.includes('unian') || host.includes('tsn') || host.includes('pravda') || host.includes('rbc')) return process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || defaultNews;
+    if (host.includes('unian') || host.includes('tsn') || host.includes('pravda') || host.includes('rbc')) return defaultNews;
   } catch {
     // ignore
   }
@@ -109,7 +120,7 @@ const RSS_CONFIG: Record<string, string[]> = {
   "💰 Економіка": [
     "https://www.unian.ua/rss/economics.rss",
     "https://tsn.ua/rss/groshi.rss",
-    "https://www.rbc.ua/static/rss/all.ukr.rss.xml"
+    "https://epravda.com.ua/rss/news/"
   ],
   "⚠️ Breaking": [
     "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
@@ -117,6 +128,24 @@ const RSS_CONFIG: Record<string, string[]> = {
     "https://censor.net/ua/feed"
   ]
 };
+
+function isEconomyRelated(text: string): boolean {
+  const t = text.toLowerCase();
+  const allow = [
+    "економ", "бюджет", "подат", "інфляц", "курс", "валют", "грив", "долар", "євро",
+    "нбу", "банк", "депозит", "кредит", "облігац", "бірж", "ринок",
+    "нафт", "газ", "енерг", "тариф", "комунал",
+    "зарплат", "пенс", "виплат", "субсид",
+    "бізнес", "компан", "інвест", "експорт", "імпорт", "мит", "акциз",
+    "нерухом", "аграр", "зерн",
+  ];
+  const block = [
+    "зсу", "вмс", "ссо", "фронт", "війна", "обстріл", "ракета", "дрон", "ппо",
+    "спорт", "футбол", "теніс", "олімпі", "матч", "гол", "тренер", "чемпіон",
+  ];
+  if (block.some((k) => t.includes(k))) return false;
+  return allow.some((k) => t.includes(k));
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -148,8 +177,20 @@ export async function GET(request: Request) {
     // Видаляємо дублікати за заголовком (якщо різні сайти запостили одне й те саме)
     const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
+    // Для "Економіка" — підчищаємо нерелевантні (спорт/війна тощо), але не робимо розділ порожнім
+    const filteredItems = category === "💰 Економіка"
+      ? (() => {
+          const withText = uniqueItems.map((it) => ({
+            it,
+            text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
+          }));
+          const onlyEconomy = withText.filter(({ text }) => isEconomyRelated(text)).map(({ it }) => it);
+          return onlyEconomy.length >= 6 ? onlyEconomy : uniqueItems;
+        })()
+      : uniqueItems;
+
     // Додаємо URL зображення: enclosure / content:encoded (в т.ч. data-src для АрміяInform) або тематичний fallback
-    const itemsWithImage = uniqueItems.slice(0, 30).map((item) => {
+    const itemsWithImage = filteredItems.slice(0, 30).map((item) => {
       const imageUrl = getImageUrl(item as unknown as Parameters<typeof getImageUrl>[0], item.link) || getFallbackImageUrl(item.link);
       return { ...item, imageUrl };
     });
