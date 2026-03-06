@@ -277,11 +277,11 @@ export default function Home() {
   }, [activeCategory, news.length, news.slice(0, 5).map((n) => n.title).join('|')]);
 
   return (
-    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-clip pb-[env(safe-area-inset-bottom)]`}>
+    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-[100dvh] min-h-screen min-w-0 transition-colors duration-500 font-sans relative pb-[env(safe-area-inset-bottom)]`}>
       
       {showAboutModal && (
         <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-3xl bg-black/60">
-          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`}>
+          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90dvh] max-h-[90vh] overflow-y-auto overflow-x-hidden overscroll-contain p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`}>
              <div className="absolute top-0 left-0 w-full h-2 bg-red-600 rounded-t-[2rem] sm:rounded-none"></div>
              <h2 className="text-3xl sm:text-4xl font-[1000] italic uppercase tracking-tighter mb-6 sm:mb-8">Про <span className="text-red-600">нас</span></h2>
              <div className="space-y-5 text-[15px] sm:text-sm md:text-base leading-relaxed opacity-90">
@@ -296,7 +296,7 @@ export default function Home() {
 
       {showSendNewsModal && (
         <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-3xl bg-black/60" onClick={() => !sendNewsLoading && setShowSendNewsModal(false)}>
-          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`} onClick={e => e.stopPropagation()}>
+          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90dvh] max-h-[90vh] overflow-y-auto overflow-x-hidden overscroll-contain p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`} onClick={e => e.stopPropagation()}>
             <div className="absolute top-0 left-0 w-full h-2 bg-blue-600 rounded-t-[2rem] sm:rounded-none"></div>
             <h2 className="text-2xl sm:text-3xl font-[1000] italic uppercase tracking-tighter mb-2">Надіслати <span className="text-blue-600">новину</span></h2>
             <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Звернення анонімне і надходить напряму адміну в особисті, у канал не публікується. Заповніть заголовок або текст (посилання — за бажанням).</p>
@@ -355,7 +355,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* HEADER: плавне приховування верхньої смуги без стрибків нижньої панелі */}
+      {/* HEADER: sticky — не обгортати в overflow (Safari iOS інакше ламає) */}
       <div className="sticky top-0 z-[1000] w-full pt-[env(safe-area-inset-top)]">
         <div
           className={`overflow-hidden transition-[max-height,opacity,border-color] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${headerCollapsed ? 'max-h-0 opacity-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black tracking-[0.15em] backdrop-blur-md`}
@@ -431,7 +431,7 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0">
+      <main className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0 overflow-x-hidden">
         <div className="grid lg:grid-cols-12 gap-8 sm:gap-16 min-w-0">
           <div className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0">
             {isLoadingNews ? (
