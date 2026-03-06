@@ -7,16 +7,20 @@ const KV_KEY_PREFIX = "ln_threat_last:";
 
 import { getKV } from "@/lib/kv";
 
-/** Прибирає з тексту підпис каналу типу «ПІДПИСАТИСЯ | ППО UA РАДАР» (RSS тягне це з TG). */
+/** Прибирає з тексту назву каналу, підписи та посилання на канал — лишаємо тільки текст новини. */
 function stripChannelSignature(raw: string): string {
   if (!raw?.trim()) return "";
   let t = raw
-    // Рядки/фрази "ПІДПИСАТИСЯ | ..." та "ППО UA РАДАР 📡" (в title теж буває)
     .replace(/\n?\s*ПІДПИСАТИСЯ\s*\|\s*[^\n]+/gi, "")
     .replace(/\n?\s*Підписатися\s*\|\s*[^\n]+/gi, "")
     .replace(/\n?\s*SUBSCRIBE\s*\|\s*[^\n]+/gi, "")
     .replace(/\n?\s*Підписатись\s*\|\s*[^\n]+/gi, "")
-    .replace(/\s*ППО UA РАДАР\s*📡\s*/gi, " ");
+    .replace(/\n?\s*ПЕРЕЙТИ К СООБЩЕНИЮ\s*/gi, "")
+    .replace(/\n?\s*[Пп]ерейти к сообщению\s*/gi, "")
+    .replace(/\s*ППО UA РАДАР\s*📡\s*/gi, " ")
+    .replace(/\s*ППО UA\s*\|\s*РАДАР\s*📡\s*/gi, " ")
+    .replace(/\s*ППО\s+РАДАР\s*📡?\s*/gi, " ")
+    .replace(/\s*Telegram\s*/gi, " ");
   return t.replace(/\s+/g, " ").trim();
 }
 
@@ -74,7 +78,8 @@ export async function GET(req: NextRequest) {
       const cleaned = stripChannelSignature(rawContent);
       const trimmed = cleaned.slice(0, 400).trim();
       const body = trimmed ? `\n\n${trimmed}${cleaned.length > 400 ? "…" : ""}` : "";
-      const message = `<b>${source.name}</b>\n\n<b>${title}</b>${body}\n\n👉 <a href="${latest.link}">Деталі</a>`;
+      // Тільки текст новини — без назви каналу ППО РАДАР і без посилання на їх канал
+      const message = title ? `<b>${title}</b>${body}` : (body || "—");
 
       const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",

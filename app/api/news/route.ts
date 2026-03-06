@@ -1,7 +1,33 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
+import * as cheerio from 'cheerio';
 
 const parser = new Parser();
+
+/** Витягує URL зображення: спочатку enclosure, потім перше <img> з HTML контенту */
+function getImageUrl(item: { enclosure?: { url?: string }; content?: string; contentEncoded?: string; description?: string }, link?: string): string | null {
+  const enc = item.enclosure?.url;
+  if (enc && enc.startsWith('http')) return enc.startsWith('http://') ? enc.replace('http://', 'https://') : enc;
+  const html = [item.contentEncoded, item.content, item.description].find(Boolean) as string | undefined;
+  if (!html || typeof html !== 'string') return null;
+  try {
+    const $ = cheerio.load(html);
+    const src = $('img').first().attr('src');
+    if (!src) return null;
+    if (src.startsWith('http')) return src.startsWith('http://') ? src.replace('http://', 'https://') : src;
+    if (link) {
+      try {
+        const base = new URL(link);
+        return new URL(src, base.origin).href;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // Карта джерел: якісні джерела за категоріями (контекст і аналітика, не лише передрук)
 const RSS_CONFIG: Record<string, string[]> = {
@@ -73,9 +99,13 @@ export async function GET(request: Request) {
     // Видаляємо дублікати за заголовком (якщо різні сайти запостили одне й те саме)
     const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
-    return NextResponse.json({
-      items: uniqueItems.slice(0, 30) // Повертаємо топ-30 унікальних свіжих новин
-    });
+    // Додаємо URL зображення з enclosure або з контенту (без випадкових picsum)
+    const itemsWithImage = uniqueItems.slice(0, 30).map((item: { link?: string; [k: string]: unknown }) => ({
+      ...item,
+      imageUrl: getImageUrl(item as Parameters<typeof getImageUrl>[0], item.link) || null,
+    }));
+
+    return NextResponse.json({ items: itemsWithImage });
   } catch (error) {
     return NextResponse.json({ error: "Помилка агрегації новин" }, { status: 500 });
   }

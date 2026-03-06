@@ -162,10 +162,7 @@ export default function Home() {
           link: item.link,
           content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
           fullText: item.contentSnippet || item.content || item.description || item.contentEncoded || "",
-          image: (() => {
-            const u = item.enclosure?.url || `https://picsum.photos/seed/${encodeURIComponent(item.title)}/800/500`;
-            return u.startsWith("http://") ? u.replace("http://", "https://") : u;
-          })()
+          image: item.imageUrl && item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : null
         })));
       }
     } catch (e) {
@@ -338,20 +335,20 @@ export default function Home() {
                         </span>
                     </a>
                 </div>
-                {/* На мобільній — горизонтальний скрол з safe-area та snap */}
-                <nav className="flex justify-center sm:flex-wrap gap-3 md:gap-4 w-full min-w-0 shrink overflow-x-auto overflow-y-hidden sm:overflow-visible py-2 -mx-[max(1rem,env(safe-area-inset-left))] sm:mx-0 px-[max(1rem,env(safe-area-inset-left))] sm:px-0 scrollbar-hide snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]">
-                    <div className="flex sm:flex-wrap items-center gap-3 md:gap-4 min-w-max sm:min-w-0 justify-start sm:justify-center">
+                {/* На мобільній — компактні кнопки, горизонтальний скрол */}
+                <nav className="flex justify-center sm:flex-wrap gap-2 md:gap-4 w-full min-w-0 shrink overflow-x-auto overflow-y-hidden sm:overflow-visible py-1.5 sm:py-2 -mx-[max(1rem,env(safe-area-inset-left))] sm:mx-0 px-[max(1rem,env(safe-area-inset-left))] sm:px-0 scrollbar-hide snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]">
+                    <div className="flex sm:flex-wrap items-center gap-2 md:gap-4 min-w-max sm:min-w-0 justify-start sm:justify-center">
                     {CATEGORIES.map(({ value, label, icon }) => (
                         <button
                             key={value}
                             onClick={() => setActiveCategory(value)}
-                            className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[52px] sm:min-h-[44px] px-4 sm:px-4 py-3 sm:py-2 rounded-full text-[10px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest transition-all touch-manipulation shrink-0 snap-start ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
+                            className={`inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[40px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2 rounded-full text-[9px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest transition-all touch-manipulation shrink-0 snap-start ${activeCategory === value ? 'bg-red-600 text-white shadow-lg shadow-red-900/30' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
                         >
                             <span className="opacity-90 shrink-0">{icon}</span>
                             <span className="whitespace-nowrap">{label}</span>
                         </button>
                     ))}
-                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[52px] sm:min-h-[44px] px-4 sm:px-4 py-3 sm:py-2 rounded-full text-[10px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap snap-start">Про нас</button>
+                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1 sm:gap-2 min-h-[40px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2 rounded-full text-[9px] sm:text-[9px] font-black uppercase tracking-wider sm:tracking-widest border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap snap-start">Про нас</button>
                     </div>
                 </nav>
             </div>
@@ -378,7 +375,13 @@ export default function Home() {
               news.map((item) => (
                 <article key={item.id} className="group flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
                   <a href={item.link} target="_blank" rel="noopener noreferrer" className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800 rounded-2xl sm:rounded-[2rem] overflow-hidden shrink-0 shadow-lg active:opacity-90 transition-opacity block">
-                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                    {item.image ? (
+                      <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-700/80">
+                        <svg className="w-12 h-12 sm:w-14 sm:h-14 text-zinc-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" /></svg>
+                      </div>
+                    )}
                   </a>
                   <div className="flex flex-col min-w-0 flex-1 w-full">
                     <span className="text-red-600 font-black text-[11px] sm:text-[10px] uppercase mb-2">{item.time} / {activeCategory}</span>
