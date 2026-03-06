@@ -28,7 +28,7 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
       ? mediaThumb
       : null;
   if (thumbUrl && thumbUrl.startsWith('http')) return thumbUrl.startsWith('http://') ? thumbUrl.replace('http://', 'https://') : thumbUrl;
-  // HTML контент (АрміяInform: content:encoded з <img> та <a href="...jpg">)
+  // HTML контент (АрміяInform: content:encoded з <img>, часто data-src для lazy-load)
   const rawEncoded = item['content:encoded'] ?? item.contentEncoded;
   const html = [rawEncoded, item.content, item.description].find(Boolean) as string | undefined;
   if (!html || typeof html !== 'string') return null;
@@ -36,13 +36,24 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
     const $ = cheerio.load(html);
     const firstImg = $('img').first();
     if (!firstImg.length) return null;
+    // Джерело: data-src (lazy), srcset (перший URL), потім src
+    let src =
+      firstImg.attr('data-src') ||
+      (() => {
+        const srcset = firstImg.attr('srcset');
+        if (!srcset) return null;
+        const first = srcset.split(',')[0]?.trim().split(/\s+/)[0];
+        return first || null;
+      })() ||
+      firstImg.attr('src');
+    if (!src) return null;
     // Якщо img всередині <a href="...jpg/.png"> — беремо повний розмір з посилання (АрміяInform)
     const parentA = firstImg.closest('a');
     const aHref = parentA.length ? parentA.attr('href') : null;
-    if (aHref && /\.(jpe?g|png|webp)(\?|$)/i.test(aHref))
-      return aHref.startsWith('http') ? (aHref.startsWith('http://') ? aHref.replace('http://', 'https://') : aHref) : (link ? new URL(aHref, new URL(link).origin).href : null);
-    const src = firstImg.attr('src');
-    if (!src) return null;
+    if (aHref && /\.(jpe?g|png|webp)(\?|$)/i.test(aHref)) {
+      const fullA = aHref.startsWith('http') ? (aHref.startsWith('http://') ? aHref.replace('http://', 'https://') : aHref) : (link ? new URL(aHref, new URL(link).origin).href : null);
+      if (fullA) return fullA;
+    }
     if (src.startsWith('http')) return src.startsWith('http://') ? src.replace('http://', 'https://') : src;
     if (link) {
       try {
@@ -56,6 +67,21 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
   } catch {
     return null;
   }
+}
+
+/** Тематичні fallback-зображення: з env або з public/images/ (fallback-news.jpg, fallback-front.jpg) */
+function getFallbackImageUrl(itemLink?: string): string {
+  const defaultNews = process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || '/images/fallback-news.jpg';
+  const defaultFront = process.env.NEXT_PUBLIC_FALLBACK_FRONT_IMAGE || '/images/fallback-front.jpg';
+  if (!itemLink) return defaultNews;
+  try {
+    const host = new URL(itemLink).hostname.toLowerCase();
+    if (host.includes('armyinform')) return defaultFront;
+    if (host.includes('unian') || host.includes('tsn') || host.includes('pravda') || host.includes('rbc')) return process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || defaultNews;
+  } catch {
+    // ignore
+  }
+  return defaultNews;
 }
 
 // Джерела з зображеннями в RSS (enclosure або <img> в контенті): TSN, UNIAN, РБК, Правда, LB.ua, АрміяInform
@@ -122,11 +148,11 @@ export async function GET(request: Request) {
     // Видаляємо дублікати за заголовком (якщо різні сайти запостили одне й те саме)
     const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
-    // Додаємо URL зображення з enclosure або з контенту (без випадкових picsum)
-    const itemsWithImage = uniqueItems.slice(0, 30).map((item) => ({
-      ...item,
-      imageUrl: getImageUrl(item as unknown as Parameters<typeof getImageUrl>[0], item.link) || null,
-    }));
+    // Додаємо URL зображення: enclosure / content:encoded (в т.ч. data-src для АрміяInform) або тематичний fallback
+    const itemsWithImage = uniqueItems.slice(0, 30).map((item) => {
+      const imageUrl = getImageUrl(item as unknown as Parameters<typeof getImageUrl>[0], item.link) || getFallbackImageUrl(item.link);
+      return { ...item, imageUrl };
+    });
 
     return NextResponse.json({ items: itemsWithImage });
   } catch (error) {

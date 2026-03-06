@@ -168,7 +168,7 @@ export default function Home() {
           link: item.link,
           content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
           fullText: item.contentSnippet || item.content || item.description || item.contentEncoded || "",
-          image: item.imageUrl && item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : null
+          image: item.imageUrl ? (item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : item.imageUrl) : null
         })));
       }
     } catch (e) {
