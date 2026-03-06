@@ -59,7 +59,8 @@ export async function GET(req: NextRequest) {
     const kv = await getKV();
     // Перемішуємо джерела, щоб не публікувати ту саму новину з різних розділів
     const shuffled = [...SOURCES].sort(() => Math.random() - 0.5);
-    const FEED_TAKE = 12; // скільки елементів брати з кожного джерела для вибору
+    // Більший пул: якщо вночі новин не оновлюється, беремо першу ще не опубліковану з останніх 30
+    const FEED_TAKE = 30;
 
     const feeds = await Promise.all(
       shuffled.map(async (s) => {
@@ -79,10 +80,11 @@ export async function GET(req: NextRequest) {
     );
     if (candidates.length === 0) return NextResponse.json({ error: "No news" }, { status: 502 });
 
+    // Перший ще не опублікований з пулу (наприклад вночі, коли RSS не оновився — беремо з тих, що ще не публікували)
     let picked = candidates[0];
     let repost = false;
     if (kv) {
-      const fresh = [];
+      const fresh: typeof candidates = [];
       for (const c of candidates) {
         const link = (c.it as { link?: string | null }).link ?? undefined;
         if (!link) continue;
@@ -92,7 +94,6 @@ export async function GET(req: NextRequest) {
       if (fresh.length > 0) {
         picked = fresh[0];
       } else {
-        // Якщо всі кандидати вже були — все одно публікуємо найсвіжіше, щоб не було "пропусків"
         repost = true;
         picked = candidates[0];
       }

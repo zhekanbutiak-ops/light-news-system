@@ -31,8 +31,10 @@ const THREAT_SOURCES = [
   { name: "⚠️ ППО UA РАДАР", url: "https://ch2rss.fflow.net/PpoUaRadar1" },
 ];
 
-// Без KV: дуже вузьке вікно (90 с), щоб не публікувати той самий пост кілька разів. Краще налаштувати KV.
+// Без KV: вузьке вікно, щоб не публікувати той самий пост кілька разів.
 const NEW_POST_WINDOW_MS = 90 * 1000;
+// Не публікувати пости старіші за N годин — щоб не виносити в заголовок/опис інфу з попереднього дня
+const MAX_AGE_HOURS = 2;
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -45,15 +47,34 @@ export async function GET(req: NextRequest) {
   }
 
   const results: { source: string; posted?: boolean; reason?: string }[] = [];
-
   const kv = await getKV();
+  const now = Date.now();
+  const maxAgeMs = MAX_AGE_HOURS * 60 * 60 * 1000;
 
   for (const source of THREAT_SOURCES) {
     try {
       const feed = await parser.parseURL(source.url);
-      const latest = feed.items[0];
-      if (!latest?.link) {
+      const items = Array.isArray(feed.items) ? feed.items : [];
+      if (items.length === 0) {
         results.push({ source: source.name, reason: "no items" });
+        continue;
+      }
+
+      // Завжди беремо пост з найновішим pubDate (не покладаємось на порядок в RSS)
+      const sorted = [...items].sort((a, b) => {
+        const ta = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        const tb = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        return tb - ta;
+      });
+      const latest = sorted[0];
+      if (!latest?.link) {
+        results.push({ source: source.name, reason: "no link" });
+        continue;
+      }
+
+      const pubTime = latest.pubDate ? new Date(latest.pubDate).getTime() : 0;
+      if (now - pubTime > maxAgeMs) {
+        results.push({ source: source.name, reason: "latest post too old (skip previous day)" });
         continue;
       }
 
@@ -65,20 +86,18 @@ export async function GET(req: NextRequest) {
           continue;
         }
       } else {
-        const pubDate = latest.pubDate ? new Date(latest.pubDate).getTime() : 0;
-        const now = Date.now();
-        if (now - pubDate > NEW_POST_WINDOW_MS) {
-          results.push({ source: source.name, reason: "not new (without KV use 90s window; add KV_REST_* to avoid duplicates)" });
+        if (now - pubTime > NEW_POST_WINDOW_MS) {
+          results.push({ source: source.name, reason: "not new (without KV use 90s window)" });
           continue;
         }
       }
 
+      // Тільки цей один пост: заголовок і опис лише з цього item (не змішуємо з попередніми днями)
       const title = stripChannelSignature(latest.title ?? "");
       const rawContent = latest.contentSnippet || latest.content || "";
       const cleaned = stripChannelSignature(rawContent);
       const trimmed = cleaned.slice(0, 400).trim();
       const body = trimmed ? `\n\n${trimmed}${cleaned.length > 400 ? "…" : ""}` : "";
-      // Тільки текст новини — без назви каналу ППО РАДАР і без посилання на їх канал
       const message = title ? `<b>${title}</b>${body}` : (body || "—");
 
       const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

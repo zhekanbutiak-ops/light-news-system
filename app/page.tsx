@@ -203,8 +203,12 @@ export default function Home() {
         if (typeof t === 'number') setWeather(prev => ({ ...prev, temp: Math.round(t) }));
       } catch (_) { /* погода опційно */ }
     })();
-    // Авто-оновлення новин кожні 5 хвилин
-    const newsInterval = setInterval(() => fetchNews(activeCategory), 5 * 60 * 1000);
+    // Авто-оновлення новин кожні 3 хв і при поверненні на вкладку
+    const newsInterval = setInterval(() => fetchNews(activeCategory), 3 * 60 * 1000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchNews(activeCategory);
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     const startDate = new Date("2022-02-24");
     setWarDay(Math.ceil(Math.abs(new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -214,6 +218,7 @@ export default function Home() {
     return () => {
         clearInterval(clock);
         clearInterval(newsInterval);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
         window.removeEventListener("scroll", handleScroll);
     };
   }, [activeCategory, fetchNews, fetchMarkets, warDay]);
