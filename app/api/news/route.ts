@@ -29,43 +29,37 @@ function getImageUrl(item: { enclosure?: { url?: string }; content?: string; con
   }
 }
 
-// Карта джерел: якісні джерела за категоріями (контекст і аналітика, не лише передрук)
+// Джерела з зображеннями в RSS (enclosure або <img> в контенті): TSN, UNIAN, РБК, Правда, LB.ua, АрміяInform
 const RSS_CONFIG: Record<string, string[]> = {
-  // Головне & Аналітика: Суспільне, Укрінформ, BBC Ukrainian
   "Головне": [
-    "https://www.suspilne.media/rss/all.rss",
-    "https://www.ukrinform.ua/rss",
-    "https://www.bbc.co.uk/ukrainian/index.xml"
+    "https://tsn.ua/rss/full.rss",
+    "https://www.unian.ua/rss/common.rss",
+    "https://www.rbc.ua/static/rss/all.ukr.rss.xml"
   ],
-  // Фронт & Оборона: Мілітарний, Новинарня, АрміяInform
   "🛡️ Фронт": [
-    "https://mil.in.ua/uk/feed/",
-    "https://novynarnia.com/feed/rss/",
+    "https://tsn.ua/rss/ato.rss",
+    "https://www.unian.ua/rss/war.rss",
     "https://armyinform.com.ua/feed/"
   ],
-  // Україна: Укрінформ, Суспільне, LB.ua
   "🇺🇦 Україна": [
-    "https://www.ukrinform.ua/rss",
-    "https://www.suspilne.media/rss/all.rss",
+    "https://www.unian.ua/rss/politics.rss",
+    "https://tsn.ua/rss/ukrayina.rss",
     "https://lb.ua/rss/ukr/feed.xml"
   ],
-  // Світ & Геополітика: Європейська правда, VOA Ukrainian, DW
   "🌍 Світ": [
-    "https://www.eurointegration.com.ua/rss/",
-    "https://www.eurointegration.com.ua/rss/view_news/",
+    "https://www.unian.ua/rss/world.rss",
+    "https://tsn.ua/rss/svit.rss",
     "https://rss.dw.com/rss-ukr-all"
   ],
-  // Економіка & IT: Економічна правда, NV Бізнес, DOU
   "💰 Економіка": [
-    "https://epravda.com.ua/rss/news/",
-    "https://biz.nv.ua/ukr/rss/all.xml",
-    "https://dou.ua/lenta/sitenews/feed/"
+    "https://www.unian.ua/rss/economics.rss",
+    "https://tsn.ua/rss/groshi.rss",
+    "https://www.rbc.ua/static/rss/all.ukr.rss.xml"
   ],
-  // Breaking: РБК-Україна, Цензор.НЕТ, Правда
   "⚠️ Breaking": [
     "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
-    "https://censor.net/ua/feed",
-    "https://www.pravda.com.ua/rss/view_mainnews/"
+    "https://www.pravda.com.ua/rss/view_mainnews/",
+    "https://censor.net/ua/feed"
   ]
 };
 
