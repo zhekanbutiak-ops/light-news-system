@@ -2,17 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/send-news
- * Приймає пропозицію новини і відправляє її в Telegram адміну.
- * Потрібні змінні: TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
- * (TELEGRAM_ADMIN_CHAT_ID — це chat_id особистого чату з ботом, куди приходить "надіслати повідомлення адміну")
+ * Відправляє пропозицію новини тільки адміну в особисті (не в канал).
+ * Потрібні: TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID (числовий chat_id особистого чату з ботом).
  */
 export async function POST(req: NextRequest) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
   if (!token || !adminChatId) {
     return NextResponse.json(
-      { error: 'Send-news not configured (TELEGRAM_BOT_TOKEN / TELEGRAM_ADMIN_CHAT_ID)' },
+      { error: 'Надсилання тільки адміну: вкажіть TELEGRAM_ADMIN_CHAT_ID (не використовується канал)' },
       { status: 503 }
     );
   }

@@ -294,7 +294,7 @@ export default function Home() {
           <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`} onClick={e => e.stopPropagation()}>
             <div className="absolute top-0 left-0 w-full h-2 bg-blue-600 rounded-t-[2rem] sm:rounded-none"></div>
             <h2 className="text-2xl sm:text-3xl font-[1000] italic uppercase tracking-tighter mb-2">Надіслати <span className="text-blue-600">новину</span></h2>
-            <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Пропонована новина потрапить до адміна в Telegram. Заповніть заголовок або текст (посилання — за бажанням).</p>
+            <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Звернення надійде тільки вам в особисті повідомлення (<a href="https://t.me/sk1pper_13" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">@sk1pper_13</a>), у канал не публікується. Заповніть заголовок або текст (посилання — за бажанням).</p>
             {sendNewsResult === "ok" ? (
               <div className="py-6 text-center">
                 <p className="text-green-600 font-bold text-sm mb-4">Повідомлення надіслано. Дякуємо!</p>
