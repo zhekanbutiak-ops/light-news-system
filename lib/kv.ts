@@ -48,10 +48,11 @@ function redisAdapter(client: Awaited<ReturnType<typeof createRedisClient>>): KV
       if (options?.ex) await client!.setEx(key, options.ex, str);
       else await client!.set(key, str);
     },
-    async *scanIterator(options: { match: string; count?: number }) {
+    async *scanIterator(options: { match: string; count?: number }): AsyncIterable<string> {
       const opts = { MATCH: options.match, COUNT: options.count ?? 100 } as const;
-      for await (const key of client!.scanIterator(opts)) {
-        yield key;
+      for await (const batch of client!.scanIterator(opts)) {
+        const keys = Array.isArray(batch) ? batch : [batch];
+        for (const key of keys) yield key;
       }
     },
   };
