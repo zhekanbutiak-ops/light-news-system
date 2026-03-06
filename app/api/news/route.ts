@@ -3,37 +3,43 @@ import Parser from 'rss-parser';
 
 const parser = new Parser();
 
-// Карта джерел: по 2-3 сайти на кожну категорію для максимального охоплення
+// Карта джерел: якісні джерела за категоріями (контекст і аналітика, не лише передрук)
 const RSS_CONFIG: Record<string, string[]> = {
+  // Головне & Аналітика: Суспільне, Укрінформ, BBC Ukrainian
   "Головне": [
-    "https://tsn.ua/rss/full.rss",
-    "https://www.unian.ua/rss/common.rss",
-    "https://rss.dw.com/rss-ukr-all"
+    "https://www.suspilne.media/rss/all.rss",
+    "https://www.ukrinform.ua/rss",
+    "https://www.bbc.co.uk/ukrainian/index.xml"
   ],
+  // Фронт & Оборона: Мілітарний, Новинарня, АрміяInform
   "🛡️ Фронт": [
-    "https://tsn.ua/rss/ato.rss",
-    "https://www.unian.ua/rss/war.rss",
+    "https://mil.in.ua/uk/feed/",
+    "https://novynarnia.com/feed/rss/",
     "https://armyinform.com.ua/feed/"
   ],
+  // Україна: Укрінформ, Суспільне, LB.ua
   "🇺🇦 Україна": [
-    "https://www.unian.ua/rss/politics.rss",
-    "https://tsn.ua/rss/ukrayina.rss",
+    "https://www.ukrinform.ua/rss",
+    "https://www.suspilne.media/rss/all.rss",
     "https://lb.ua/rss/ukr/feed.xml"
   ],
+  // Світ & Геополітика: Європейська правда, VOA Ukrainian, DW
   "🌍 Світ": [
-    "https://www.unian.ua/rss/world.rss",
-    "https://tsn.ua/rss/svit.rss",
-    "https://p.dw.com/p/17Y9"
+    "https://www.eurointegration.com.ua/rss/",
+    "https://www.eurointegration.com.ua/rss/view_news/",
+    "https://rss.dw.com/rss-ukr-all"
   ],
+  // Економіка & IT: Економічна правда, NV Бізнес, DOU
   "💰 Економіка": [
-    "https://www.unian.ua/rss/economics.rss",
-    "https://tsn.ua/rss/groshi.rss",
-    "https://biz.nv.ua/ukr/rss/all.xml"
+    "https://epravda.com.ua/rss/news/",
+    "https://biz.nv.ua/ukr/rss/all.xml",
+    "https://dou.ua/lenta/sitenews/feed/"
   ],
+  // Breaking: РБК-Україна, Цензор.НЕТ, Правда
   "⚠️ Breaking": [
-    "https://www.pravda.com.ua/rss/view_mainnews/",
-    "https://www.pravda.com.ua/rss/view_news/",
-    "https://interfax.com.ua/news/last.rss"
+    "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
+    "https://censor.net/ua/feed",
+    "https://www.pravda.com.ua/rss/view_mainnews/"
   ]
 };
 

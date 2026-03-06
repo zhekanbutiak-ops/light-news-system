@@ -5,24 +5,32 @@ import Parser from 'rss-parser';
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const parser = new Parser();
 
-const KV_KEY_LAST_LINK = "ln_autopublish_last";
+const KV_KEY_POSTED_LINKS = "ln_autopublish_posted_links";
+const MAX_POSTED_LINKS = 500; // скільки останніх посилань зберігати — повторів не буде ніколи
 
-async function getKV() {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
-  try {
-    const { kv } = await import("@vercel/kv");
-    return kv;
-  } catch {
-    return null;
-  }
+import { getKV } from "@/lib/kv";
+
+async function wasAlreadyPosted(kv: Awaited<ReturnType<typeof getKV>>, link: string): Promise<boolean> {
+  if (!kv || !link) return false;
+  const raw = (await kv.get(KV_KEY_POSTED_LINKS)) as string[] | null;
+  const list = Array.isArray(raw) ? raw : [];
+  return list.includes(link);
 }
 
-// Звичайні новинні джерела
+async function markAsPosted(kv: Awaited<ReturnType<typeof getKV>>, link: string): Promise<void> {
+  if (!kv || !link) return;
+  const raw = (await kv.get(KV_KEY_POSTED_LINKS)) as string[] | null;
+  const list = Array.isArray(raw) ? raw : [];
+  const next = [...list, link].slice(-MAX_POSTED_LINKS);
+  await kv.set(KV_KEY_POSTED_LINKS, next);
+}
+
+// Різні джерела для автопублікації в TG (без дубляжу з одного сайту)
 const SOURCES = [
-  { name: "🌍 СВІТ", url: "https://tsn.ua/rss/svit.rss" },
-  { name: "💰 ЕКОНОМІКА", url: "https://tsn.ua/rss/groshi.rss" },
-  { name: "🛡️ ВІЙНА", url: "https://tsn.ua/rss/ato.rss" },
-  { name: "🇺🇦 УКРАЇНА", url: "https://tsn.ua/rss/ukrayina.rss" }
+  { name: "🌍 СВІТ", url: "https://www.eurointegration.com.ua/rss/" },
+  { name: "💰 ЕКОНОМІКА", url: "https://epravda.com.ua/rss/news/" },
+  { name: "🛡️ ВІЙНА", url: "https://novynarnia.com/feed/rss/" },
+  { name: "🇺🇦 УКРАЇНА", url: "https://www.suspilne.media/rss/all.rss" }
 ];
 
 export async function GET(req: NextRequest) {
@@ -42,16 +50,18 @@ export async function GET(req: NextRequest) {
     if (!latestNews) return NextResponse.json({ error: "No news" });
 
     if (kv) {
-      const lastLink = (await kv.get(KV_KEY_LAST_LINK)) as string | null;
       let tries = 0;
-      while (latestNews?.link && latestNews.link === lastLink && tries < SOURCES.length) {
+      const maxTries = SOURCES.length * 8;
+      while (latestNews?.link && (await wasAlreadyPosted(kv, latestNews.link)) && tries < maxTries) {
         tries++;
-        source = shuffled[tries % shuffled.length];
+        const si = tries % SOURCES.length;
+        const ii = Math.floor(tries / SOURCES.length) % 8;
+        source = shuffled[si];
         feed = await parser.parseURL(source.url);
-        latestNews = feed.items[0];
+        latestNews = feed.items?.[ii] ?? feed.items?.[0];
       }
-      if (latestNews?.link && latestNews.link === lastLink) {
-        return NextResponse.json({ skipped: true, reason: "all latest already posted" });
+      if (!latestNews?.link || (await wasAlreadyPosted(kv, latestNews.link))) {
+        return NextResponse.json({ skipped: true, reason: "all candidates already posted" });
       }
     }
     if (!latestNews) return NextResponse.json({ error: "No news" });
@@ -95,7 +105,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (kv && latestNews.link) await kv.set(KV_KEY_LAST_LINK, latestNews.link);
+    if (kv && latestNews.link) await markAsPosted(kv, latestNews.link);
     return NextResponse.json({ success: true, category: source.name, posted: originalTitle });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Error";

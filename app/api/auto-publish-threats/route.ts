@@ -5,15 +5,7 @@ const parser = new Parser();
 
 const KV_KEY_PREFIX = "ln_threat_last:";
 
-async function getKV() {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
-  try {
-    const { kv } = await import("@vercel/kv");
-    return kv;
-  } catch {
-    return null;
-  }
-}
+import { getKV } from "@/lib/kv";
 
 /** Прибирає з тексту підпис каналу типу «ПІДПИСАТИСЯ | ППО UA РАДАР» (RSS тягне це з TG). */
 function stripChannelSignature(raw: string): string {

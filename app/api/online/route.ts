@@ -3,15 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const ONLINE_PREFIX = "ln_online:";
 const TTL_SEC = 120; // вважаємо "онлайн" якщо був пульс за останні 2 хв
 
-async function getKV() {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
-  try {
-    const { kv } = await import("@vercel/kv");
-    return kv;
-  } catch {
-    return null;
-  }
-}
+import { getKV } from "@/lib/kv";
 
 /** Пульс: клієнт каже "я тут". POST { id: string } */
 export async function POST(req: NextRequest) {

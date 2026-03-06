@@ -270,43 +270,43 @@ export default function Home() {
   }, [activeCategory, news.length, news.slice(0, 5).map((n) => n.title).join('|')]);
 
   return (
-    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-clip`}>
+    <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-screen min-w-0 transition-colors duration-500 font-sans relative overflow-x-clip pb-[env(safe-area-inset-bottom)]`}>
       
       {showAboutModal && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 backdrop-blur-3xl bg-black/60">
-          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full p-8 md:p-12 rounded-[3rem] border shadow-2xl relative overflow-hidden`}>
-             <div className="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
-             <h2 className="text-4xl font-[1000] italic uppercase tracking-tighter mb-8">LIGHT <span className="text-red-600">MISSION</span></h2>
-             <div className="space-y-6 text-sm md:text-base italic leading-relaxed opacity-90">
+        <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-3xl bg-black/60">
+          <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`}>
+             <div className="absolute top-0 left-0 w-full h-2 bg-red-600 rounded-t-[2rem] sm:rounded-none"></div>
+             <h2 className="text-3xl sm:text-4xl font-[1000] italic uppercase tracking-tighter mb-6 sm:mb-8">LIGHT <span className="text-red-600">MISSION</span></h2>
+             <div className="space-y-5 text-[15px] sm:text-sm md:text-base italic leading-relaxed opacity-90">
                 <p><strong className="text-red-600 uppercase">LIGHT FAST</strong> — це перша в Україні повністю автономна інформаційна екосистема.</p>
                 <p>Наш алгоритм працює за принципом <span className="text-red-600 font-bold">Absolute Autonomy</span>.</p>
              </div>
-             <button onClick={() => setShowAboutModal(false)} className="w-full mt-10 py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">Зрозуміло</button>
+             <button onClick={() => setShowAboutModal(false)} className="w-full mt-8 sm:mt-10 py-4 min-h-[52px] bg-red-600 text-white rounded-2xl font-black uppercase text-[12px] sm:text-[10px] tracking-widest touch-manipulation active:opacity-90">Зрозуміло</button>
           </div>
         </div>
       )}
 
       {/* HEADER SYSTEM: верхня смуга ховається при скролі, вірші + пункти залишаються */}
       <div className="sticky top-0 z-[1000] w-full pt-[env(safe-area-inset-top)]">
-        <div className={`overflow-hidden transition-all duration-300 ease-out ${headerCollapsed ? 'max-h-0 opacity-0 py-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black text-[9px] tracking-[0.15em] backdrop-blur-md`}>
-          <div className="py-2.5">
-            <div className="max-w-[1440px] mx-auto px-5 sm:px-6 flex justify-between items-center flex-wrap gap-x-3 sm:gap-x-6 gap-y-2">
-                <div className="flex items-center gap-2 sm:gap-4 flex-wrap min-w-0">
-                    {dateLine && <span className="uppercase">{dateLine}</span>}
-                    <span>${markets.usd.toFixed(2)}</span>
-                    <span>€{markets.eur.toFixed(2)}</span>
-                    <span>BTC ${markets.btc.toLocaleString()}</span>
-                    <span>Au {markets.gold}₴</span>
-                    <span>Ag {markets.silver}₴</span>
-                    <span className="flex items-center gap-1.5">
+        <div className={`overflow-hidden transition-all duration-300 ease-out ${headerCollapsed ? 'max-h-0 opacity-0 py-0 border-b-0' : 'max-h-28 opacity-100'} ${darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-zinc-800'} text-zinc-300 border-b font-black tracking-[0.15em] backdrop-blur-md`}>
+          <div className="py-3 sm:py-2.5">
+            <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex justify-between items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 overflow-x-auto scrollbar-hide text-[10px] sm:text-[9px] [scrollbar-width:none] [-ms-overflow-style:none]">
+                    {dateLine && <span className="uppercase shrink-0">{dateLine}</span>}
+                    <span className="shrink-0">${markets.usd.toFixed(2)}</span>
+                    <span className="shrink-0">€{markets.eur.toFixed(2)}</span>
+                    <span className="shrink-0 hidden min-[400px]:inline">BTC ${markets.btc.toLocaleString()}</span>
+                    <span className="shrink-0">Au {markets.gold}₴</span>
+                    <span className="shrink-0 hidden sm:inline">Ag {markets.silver}₴</span>
+                    <span className="flex items-center gap-1.5 shrink-0">
                         <span className="opacity-80" aria-hidden>☁</span>
                         <span>{weather.temp != null ? `${weather.temp > 0 ? '+' : ''}${weather.temp}°` : '—°'}</span>
                         <span className="uppercase">{weather.city}</span>
                     </span>
-                    <span className="text-red-500 animate-pulse">● LIVE</span>
-                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full hidden sm:inline">Напруга: {tensionLevel}/10</span>
+                    <span className="text-red-500 animate-pulse shrink-0">● LIVE</span>
+                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full hidden sm:inline shrink-0">Напруга: {tensionLevel}/10</span>
                 </div>
-                <div className="flex gap-2 sm:gap-3 md:gap-4 items-center">
+                <div className="flex gap-2 sm:gap-3 md:gap-4 items-center shrink-0">
                     <div className="flex items-center gap-1 sm:gap-2 text-zinc-500 [&_a]:p-1.5 sm:[&_a]:p-0.5 [&_a]:rounded [&_a:hover]:text-zinc-300 [&_svg]:w-4 [&_svg]:h-4 [&_a]:min-w-[44px] [&_a]:min-h-[44px] sm:[&_a]:min-w-0 sm:[&_a]:min-h-0 [&_a]:flex [&_a]:items-center [&_a]:justify-center">
                         <a href="#" title="Facebook" className="inline-flex"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
                         <a href="#" title="YouTube" className="inline-flex"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
@@ -315,31 +315,31 @@ export default function Home() {
                         <a href="#" title="X (Twitter)" className="inline-flex"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
                     </div>
                     <span className="font-mono text-[10px] opacity-80">{time}</span>
-                    <button onClick={() => setDarkMode(!darkMode)} className="border border-zinc-600 px-2 py-0.5 rounded text-[8px] hover:bg-zinc-600 transition-all uppercase">Theme</button>
+                    <button onClick={() => setDarkMode(!darkMode)} className="border border-zinc-600 px-3 py-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[10px] hover:bg-zinc-600 transition-all uppercase touch-manipulation">Theme</button>
                 </div>
             </div>
           </div>
         </div>
 
-        <div aria-hidden="true" className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-2.5 sm:py-2 border-b overflow-hidden backdrop-blur-md px-2 sm:px-0`}>
+        <div aria-hidden="true" className={`${darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-500' : 'bg-zinc-100/95 border-zinc-200 text-zinc-600'} py-3 sm:py-2 border-b overflow-hidden backdrop-blur-md pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]`}>
             <div className="marquee-container flex whitespace-nowrap">
                 <div className="animate-marquee flex">
-                    {poems.concat(poems).map((poem, index) => <span key={index} className="mx-6 sm:mx-10 text-[8px] sm:text-[9px] font-bold uppercase italic">{poem}</span>)}
+                    {poems.concat(poems).map((poem, index) => <span key={index} className="mx-4 sm:mx-10 text-[9px] sm:text-[9px] font-bold uppercase italic">{poem}</span>)}
                 </div>
             </div>
         </div>
 
         <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-4 sm:py-4 border-b backdrop-blur-md`}>
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
+            <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
                 <div className="flex items-center justify-center sm:justify-start shrink-0">
-                    <a href="/" className="flex items-center gap-2 group min-h-[44px]">
+                    <a href="/" className="flex items-center gap-2 group min-h-[44px] min-w-[44px] py-2">
                         <span className={`text-xl sm:text-2xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
                             Light<span className="text-blue-600">News</span>
                         </span>
                     </a>
                 </div>
-                {/* На мобільній — горизонтальний скрол, більше відступи й шрифт */}
-                <nav className="flex justify-center sm:flex-wrap gap-3 md:gap-4 w-full min-w-0 shrink overflow-x-auto overflow-y-hidden sm:overflow-visible py-1 -mx-2 sm:mx-0 px-2 sm:px-0 scrollbar-hide">
+                {/* На мобільній — горизонтальний скрол з safe-area та snap */}
+                <nav className="flex justify-center sm:flex-wrap gap-3 md:gap-4 w-full min-w-0 shrink overflow-x-auto overflow-y-hidden sm:overflow-visible py-2 -mx-[max(1rem,env(safe-area-inset-left))] sm:mx-0 px-[max(1rem,env(safe-area-inset-left))] sm:px-0 scrollbar-hide snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]">
                     <div className="flex sm:flex-wrap items-center gap-3 md:gap-4 min-w-max sm:min-w-0 justify-start sm:justify-center">
                     {CATEGORIES.map(({ value, label, icon }) => (
                         <button
@@ -358,13 +358,13 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="max-w-[1440px] mx-auto px-5 sm:px-6 py-8 sm:py-12 pb-28 sm:pb-12 w-full min-w-0">
-        <div className="grid lg:grid-cols-12 gap-12 sm:gap-16">
-          <div className="lg:col-span-8 space-y-14 sm:space-y-16 min-w-0">
+      <main className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0">
+        <div className="grid lg:grid-cols-12 gap-8 sm:gap-16 min-w-0">
+          <div className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0">
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start min-w-0">
-                  <div className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800/80 rounded-xl sm:rounded-[2rem] shrink-0 animate-pulse" />
+                <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
+                  <div className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800/80 rounded-2xl sm:rounded-[2rem] shrink-0 animate-pulse" />
                   <div className="flex-1 space-y-3">
                     <div className="h-3 w-20 bg-zinc-700/60 rounded animate-pulse" />
                     <div className="h-7 w-full max-w-md bg-zinc-700/60 rounded animate-pulse" />
@@ -376,19 +376,23 @@ export default function Home() {
               ))
             ) : (
               news.map((item) => (
-                <article key={item.id} className="group flex flex-col md:flex-row gap-6 sm:gap-8 items-start min-w-0 py-2 sm:py-0">
-                  <div className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800 rounded-2xl sm:rounded-[2rem] overflow-hidden shrink-0 shadow-xl">
-                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="" />
-                  </div>
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-red-600 font-black text-[10px] uppercase mb-2">{item.time} / {activeCategory}</span>
-                    <h2 className="text-lg sm:text-2xl font-[1000] leading-snug sm:leading-tight tracking-tighter mb-4 sm:mb-4 uppercase italic"><a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline active:opacity-80">{item.title}</a></h2>
-                    <p className="text-sm opacity-60 italic line-clamp-2 leading-relaxed">{item.content}</p>
+                <article key={item.id} className="group flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
+                  <a href={item.link} target="_blank" rel="noopener noreferrer" className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800 rounded-2xl sm:rounded-[2rem] overflow-hidden shrink-0 shadow-lg active:opacity-90 transition-opacity block">
+                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                  </a>
+                  <div className="flex flex-col min-w-0 flex-1 w-full">
+                    <span className="text-red-600 font-black text-[11px] sm:text-[10px] uppercase mb-2">{item.time} / {activeCategory}</span>
+                    <h2 className="text-base sm:text-2xl font-[1000] leading-snug sm:leading-tight tracking-tight sm:tracking-tighter mb-3 sm:mb-4 uppercase italic">
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline active:opacity-80 block py-1 -my-1">
+                        {item.title}
+                      </a>
+                    </h2>
+                    <p className="text-[15px] sm:text-sm opacity-70 sm:opacity-60 italic line-clamp-2 leading-relaxed">{item.content}</p>
                     <a
                       href="https://t.me/lightnews13"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`mt-4 inline-flex items-center gap-2 self-start px-4 py-2 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[#2AABEE]/30 focus:ring-offset-2 ${darkMode ? 'border-zinc-600/80 text-zinc-400 hover:border-[#2AABEE]/60 hover:text-[#2AABEE] hover:bg-[#2AABEE]/8 focus:ring-offset-zinc-900' : 'border-zinc-300 text-zinc-600 hover:border-[#2AABEE] hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 focus:ring-offset-white'}`}
+                      className={`mt-4 inline-flex items-center justify-center gap-2 self-start min-h-[44px] px-5 py-3 rounded-full text-[12px] sm:text-[11px] font-semibold uppercase tracking-wide transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[#2AABEE]/30 focus:ring-offset-2 touch-manipulation ${darkMode ? 'border-zinc-600/80 text-zinc-400 hover:border-[#2AABEE]/60 hover:text-[#2AABEE] hover:bg-[#2AABEE]/8 focus:ring-offset-zinc-900' : 'border-zinc-300 text-zinc-600 hover:border-[#2AABEE] hover:text-[#2AABEE] hover:bg-[#2AABEE]/5 focus:ring-offset-white'}`}
                       title="Підписатися на канал у Telegram"
                     >
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -407,18 +411,18 @@ export default function Home() {
                 <div className="space-y-8">
                     {/* Ресурси — офіційні держ установ та сервіси */}
                     <div className="border-b border-zinc-800 pb-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3">Офіційні джерела</p>
-                      <nav className="flex flex-col gap-1">
-                        <a href="https://alerts.in.ua/lite" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                      <p className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3">Офіційні джерела</p>
+                      <nav className="flex flex-col gap-0">
+                        <a href="https://alerts.in.ua/lite" target="_blank" rel="noopener noreferrer" className={`text-[13px] sm:text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-3 sm:py-1.5 -ml-px min-h-[44px] sm:min-h-0 flex items-center transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
                           Карта тривог
                         </a>
-                        <a href="https://www.bank.gov.ua/ua" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                        <a href="https://www.bank.gov.ua/ua" target="_blank" rel="noopener noreferrer" className={`text-[13px] sm:text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-3 sm:py-1.5 -ml-px min-h-[44px] sm:min-h-0 flex items-center transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
                           НБУ
                         </a>
-                        <a href="https://www.kmu.gov.ua" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                        <a href="https://www.kmu.gov.ua" target="_blank" rel="noopener noreferrer" className={`text-[13px] sm:text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-3 sm:py-1.5 -ml-px min-h-[44px] sm:min-h-0 flex items-center transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
                           Уряд України
                         </a>
-                        <a href="https://t.me/lightnews13" target="_blank" rel="noopener noreferrer" className={`text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-1 -ml-px transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
+                        <a href="https://t.me/lightnews13" target="_blank" rel="noopener noreferrer" className={`text-[13px] sm:text-[11px] font-medium uppercase tracking-wide border-l-2 pl-3 py-3 sm:py-1.5 -ml-px min-h-[44px] sm:min-h-0 flex items-center transition-colors ${darkMode ? 'border-zinc-700 text-zinc-400 hover:border-red-600 hover:text-zinc-200' : 'border-zinc-300 text-zinc-600 hover:border-red-500 hover:text-zinc-900'}`}>
                           Telegram
                         </a>
                       </nav>
@@ -427,7 +431,7 @@ export default function Home() {
                     {/* Що в фокусі — AI-дайджест одним реченням */}
                     <div className="rounded-xl overflow-hidden border border-zinc-800 bg-[#0a0a0c] p-4 shadow-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[10px] font-black uppercase tracking-wider text-blue-500">
+                        <h3 className="text-[11px] sm:text-[10px] font-black uppercase tracking-wider text-blue-500">
                           Що в фокусі
                         </h3>
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" aria-hidden />
@@ -436,7 +440,7 @@ export default function Home() {
                         <p className="text-[11px] text-zinc-500 italic">Формуємо дайджест…</p>
                       )}
                       {!digestLoading && digest && (
-                        <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        <p className={`text-[14px] sm:text-[12px] leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {digest}
                         </p>
                       )}
@@ -466,15 +470,15 @@ export default function Home() {
                                 <p className="text-[11px] italic opacity-70 mt-3 leading-relaxed">Кожна гривня — це світло правди. Дякуємо, що робите новини разом з нами.</p>
                             </div>
                             <div className="relative mb-3">
-                                <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} className={`w-full bg-transparent border-b-2 border-red-600 text-center py-2 text-2xl font-black outline-none transition-all ${darkMode ? 'text-white' : 'text-black'}`} />
+                                <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} className={`w-full bg-transparent border-b-2 border-red-600 text-center py-3 sm:py-2 text-2xl sm:text-2xl font-black outline-none transition-all min-h-[48px] sm:min-h-0 ${darkMode ? 'text-white' : 'text-black'}`} />
                                 <span className="absolute right-0 bottom-2 text-[10px] font-bold opacity-30">₴</span>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 mb-4">
+                            <div className="grid grid-cols-3 gap-3 mb-4">
                                 {["50", "100", "500"].map(sum => (
-                                    <button key={sum} onClick={() => setDonateAmount(sum)} className={`py-2 text-[9px] font-black rounded-xl border-2 transition-all ${donateAmount === sum ? 'bg-red-600 border-red-600 text-white' : (darkMode ? 'border-zinc-600 opacity-60 hover:opacity-100' : 'border-zinc-300 hover:border-zinc-500')}`}>{sum} ₴</button>
+                                    <button key={sum} onClick={() => setDonateAmount(sum)} className={`py-3 sm:py-2 min-h-[48px] sm:min-h-0 text-[12px] sm:text-[9px] font-black rounded-xl border-2 transition-all touch-manipulation ${donateAmount === sum ? 'bg-red-600 border-red-600 text-white' : (darkMode ? 'border-zinc-600 opacity-60 hover:opacity-100' : 'border-zinc-300 hover:border-zinc-500')}`}>{sum} ₴</button>
                                 ))}
                             </div>
-                            <a href={`https://send.monobank.ua/3WbAugCy3w?a=${donateAmount}`} target="_blank" rel="noopener noreferrer" className="block w-full py-4 min-h-[44px] flex items-center justify-center bg-red-600 text-white hover:bg-red-500 rounded-2xl text-[10px] font-black text-center uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] touch-manipulation">Підтримати {donateAmount} ₴</a>
+                            <a href={`https://send.monobank.ua/3WbAugCy3w?a=${donateAmount}`} target="_blank" rel="noopener noreferrer" className="block w-full py-4 min-h-[52px] sm:min-h-[44px] flex items-center justify-center bg-red-600 text-white hover:bg-red-500 rounded-2xl text-[12px] sm:text-[10px] font-black text-center uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] touch-manipulation">Підтримати {donateAmount} ₴</a>
                         </div>
                     </div>
 
@@ -489,7 +493,7 @@ export default function Home() {
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label="Повернутися вгору"
-        className={`fixed z-[900] flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-300 touch-manipulation right-4 sm:right-6 bottom-[max(1.5rem,env(safe-area-inset-bottom))] ${
+        className={`fixed z-[900] flex h-14 w-14 sm:h-12 sm:w-12 items-center justify-center rounded-full shadow-lg transition-all duration-300 touch-manipulation right-5 sm:right-6 bottom-[max(1.5rem,env(safe-area-inset-bottom))] ${
           showBackToTop
             ? 'opacity-100 pointer-events-auto translate-y-0'
             : 'opacity-0 pointer-events-none translate-y-4'
@@ -500,20 +504,20 @@ export default function Home() {
         </svg>
       </button>
 
-      <footer className={`py-10 sm:py-16 border-t ${darkMode ? 'border-zinc-800' : 'border-zinc-200'} relative`}>
-          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
+      <footer className={`py-12 sm:py-16 border-t ${darkMode ? 'border-zinc-800' : 'border-zinc-200'} relative pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]`}>
+          <div className="max-w-[1440px] mx-auto px-0 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-8 sm:gap-8">
               <div className="text-center md:text-left">
-                  <h2 className="text-2xl font-[1000] italic mb-2 uppercase tracking-tighter">LIGHT<span className="text-red-600">NEWS</span></h2>
-                  <p className="text-[8px] font-black uppercase tracking-[0.4em] opacity-40">Kyiv • 2026 • Global Terminal</p>
+                  <h2 className="text-2xl sm:text-2xl font-[1000] italic mb-2 uppercase tracking-tighter">LIGHT<span className="text-red-600">NEWS</span></h2>
+                  <p className="text-[10px] sm:text-[8px] font-black uppercase tracking-[0.4em] opacity-40">Kyiv • 2026 • Global Terminal</p>
               </div>
 
-              <div className="flex flex-col items-center md:items-end gap-2 text-right">
-                  <div className="flex gap-4 mb-2">
-                      <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Online</p><p className="text-xs font-black text-green-500">{stats.online !== null ? stats.online : "—"}</p></div>
-                      <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Today</p><p className="text-xs font-black">{stats.today}</p></div>
-                      <div className="text-center"><p className="text-[8px] font-bold opacity-40 uppercase">Total</p><p className="text-xs font-black opacity-60">{stats.total}</p></div>
+              <div className="flex flex-col items-center md:items-end gap-3 text-right">
+                  <div className="flex gap-6 sm:gap-4 mb-0">
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Online</p><p className="text-sm sm:text-xs font-black text-green-500">{stats.online !== null ? stats.online : "—"}</p></div>
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Today</p><p className="text-sm sm:text-xs font-black">{stats.today}</p></div>
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Total</p><p className="text-sm sm:text-xs font-black opacity-60">{stats.total}</p></div>
                   </div>
-                  <p className="text-[7px] font-black uppercase tracking-[0.2em] opacity-30 italic">© 2026 Light News. Всі права захищені.</p>
+                  <p className="text-[9px] sm:text-[7px] font-black uppercase tracking-[0.2em] opacity-30 italic">© 2026 Light News. Всі права захищені.</p>
               </div>
           </div>
       </footer>

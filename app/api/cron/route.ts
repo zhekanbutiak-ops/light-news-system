@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const feed = await parser.parseURL('https://tsn.ua/rss/full.rss');
+    const feed = await parser.parseURL('https://www.suspilne.media/rss/all.rss');
     const latestNews = feed.items[0];
     if (!latestNews?.title) {
       return NextResponse.json({ error: 'No news item' }, { status: 502 });
