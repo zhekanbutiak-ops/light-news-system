@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { getKV } from '@/lib/kv';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const MAX_HEADLINES = 15;
+const MAX_HEADLINE_LEN = 500;
+const DIGEST_LIMIT = 30; // макс. запитів на IP за годину
 
 export async function POST(req: NextRequest) {
   try {
+    if (req.headers.get('content-type')?.toLowerCase().replace(/\s/g, '').replace(/;.*/, '') !== 'application/json') {
+      return NextResponse.json({ digest: null, error: 'Content-Type має бути application/json' }, { status: 400 });
+    }
+
+    const kv = await getKV();
+    const { allowed } = await checkRateLimit(kv, 'digest', getClientIp(req), DIGEST_LIMIT);
+    if (!allowed) {
+      return NextResponse.json({ digest: null, error: 'Забагато запитів. Спробуйте пізніше.' }, { status: 429 });
+    }
+
     const body = await req.json();
-    const headlines: string[] = Array.isArray(body?.headlines) ? body.headlines.slice(0, 15) : [];
+    const rawHeadlines: unknown[] = Array.isArray(body?.headlines) ? body.headlines.slice(0, MAX_HEADLINES) : [];
+    const headlines: string[] = rawHeadlines
+      .filter((h): h is string => typeof h === 'string')
+      .map(h => h.trim().slice(0, MAX_HEADLINE_LEN));
     if (headlines.length === 0) {
       return NextResponse.json({ digest: null, error: 'No headlines' }, { status: 400 });
     }

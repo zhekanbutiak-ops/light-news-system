@@ -279,10 +279,11 @@ export default function Home() {
         <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-3xl bg-black/60">
           <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`}>
              <div className="absolute top-0 left-0 w-full h-2 bg-red-600 rounded-t-[2rem] sm:rounded-none"></div>
-             <h2 className="text-3xl sm:text-4xl font-[1000] italic uppercase tracking-tighter mb-6 sm:mb-8">LIGHT <span className="text-red-600">MISSION</span></h2>
-             <div className="space-y-5 text-[15px] sm:text-sm md:text-base italic leading-relaxed opacity-90">
-                <p><strong className="text-red-600 uppercase">LIGHT FAST</strong> — це перша в Україні повністю автономна інформаційна екосистема.</p>
-                <p>Наш алгоритм працює за принципом <span className="text-red-600 font-bold">Absolute Autonomy</span>.</p>
+             <h2 className="text-3xl sm:text-4xl font-[1000] italic uppercase tracking-tighter mb-6 sm:mb-8">Про <span className="text-red-600">нас</span></h2>
+             <div className="space-y-5 text-[15px] sm:text-sm md:text-base leading-relaxed opacity-90">
+                <p><strong className="text-red-600">Light News</strong> — це агрегатор новин з перевірених джерел: головні події, фронт, Україна, світ, економіка та breaking-новини в одному місці.</p>
+                <p>Ми публікуємо дайджести в Telegram-каналі та інтегруємо тривоги ППО РАДАР. Кожен може запропонувати новину через форму на сайті — звернення надходять безпосередньо редакції.</p>
+                <p className="text-[13px] opacity-80">Проєкт існує завдяки підтримці читачів. Дякуємо, що залишаєтесь з нами.</p>
              </div>
              <button onClick={() => setShowAboutModal(false)} className="w-full mt-8 sm:mt-10 py-4 min-h-[52px] bg-red-600 text-white rounded-2xl font-black uppercase text-[12px] sm:text-[10px] tracking-widest touch-manipulation active:opacity-90">Зрозуміло</button>
           </div>
@@ -294,7 +295,7 @@ export default function Home() {
           <div className={`${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white text-black'} max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-12 rounded-t-[2rem] sm:rounded-[3rem] border shadow-2xl relative`} onClick={e => e.stopPropagation()}>
             <div className="absolute top-0 left-0 w-full h-2 bg-blue-600 rounded-t-[2rem] sm:rounded-none"></div>
             <h2 className="text-2xl sm:text-3xl font-[1000] italic uppercase tracking-tighter mb-2">Надіслати <span className="text-blue-600">новину</span></h2>
-            <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Звернення надійде тільки вам в особисті повідомлення (<a href="https://t.me/sk1pper_13" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">@sk1pper_13</a>), у канал не публікується. Заповніть заголовок або текст (посилання — за бажанням).</p>
+            <p className="text-[11px] sm:text-[10px] opacity-70 mb-6">Звернення анонімне і надходить напряму адміну в особисті, у канал не публікується. Заповніть заголовок або текст (посилання — за бажанням).</p>
             {sendNewsResult === "ok" ? (
               <div className="py-6 text-center">
                 <p className="text-green-600 font-bold text-sm mb-4">Повідомлення надіслано. Дякуємо!</p>

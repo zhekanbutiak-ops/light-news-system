@@ -3,9 +3,24 @@ import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { title, content, link, category } = await req.json();
+    // 0. Тільки cron (або внутрішні виклики з CRON_SECRET) можуть публікувати
+    const authHeader = req.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { title, content, link } = await req.json();
 
     // 1. Перевірка наявності ключів
     if (!process.env.GROQ_API_KEY || !process.env.TELEGRAM_BOT_TOKEN) {
@@ -34,8 +49,11 @@ export async function POST(req: NextRequest) {
 
     const aiDescription = completion.choices[0]?.message?.content || "Опис недоступний";
 
-    // 4. Повідомлення: оригінальний заголовок + AI-опис + посилання
-    const message = `<b>${title}</b>\n\n${aiDescription}\n\n👉 <a href="${link || ""}">Читати повністю</a>`;
+    // 4. Повідомлення: оригінальний заголовок + AI-опис + посилання (екрануємо HTML)
+    const safeTitle = escapeHtml(String(title));
+    const safeDesc = escapeHtml(aiDescription);
+    const safeLink = link ? escapeHtml(String(link)) : '';
+    const message = `<b>${safeTitle}</b>\n\n${safeDesc}\n\n👉 <a href="${safeLink}">Читати повністю</a>`;
 
     // 5. Відправка в Telegram
     const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

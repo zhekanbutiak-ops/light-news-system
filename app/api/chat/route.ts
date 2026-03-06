@@ -1,8 +1,28 @@
 import { NextResponse } from "next/server";
+import { getKV } from "@/lib/kv";
+import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
+
+const MAX_PROMPT_LEN = 2000;
+const CHAT_LIMIT = 30; // макс. запитів на IP за годину
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    if (req.headers.get("content-type")?.toLowerCase().replace(/\s/g, "").replace(/;.*/, "") !== "application/json") {
+      return NextResponse.json({ text: "Content-Type має бути application/json" }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const prompt = typeof body?.prompt === "string" ? body.prompt.trim().slice(0, MAX_PROMPT_LEN) : "";
+    if (!prompt) {
+      return NextResponse.json({ text: "Потрібно передати prompt" }, { status: 400 });
+    }
+
+    const kv = await getKV();
+    const { allowed } = await checkRateLimit(kv, "chat", getClientIp(req), CHAT_LIMIT);
+    if (!allowed) {
+      return NextResponse.json({ text: "Забагато запитів. Спробуйте пізніше." }, { status: 429 });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     // 1. ПЕРЕВІРКА НАЯВНОСТІ КЛЮЧА
@@ -47,7 +67,7 @@ export async function POST(req: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ parts: [{ text: prompt.slice(0, MAX_PROMPT_LEN) }] }],
           safetySettings: [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
             { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },

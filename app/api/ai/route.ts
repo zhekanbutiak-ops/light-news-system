@@ -1,10 +1,29 @@
 import { NextResponse } from 'next/server';
+import { getKV } from '@/lib/kv';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+
+const MAX_PROMPT_LEN = 2000;
+const AI_LIMIT = 30; // макс. запитів на IP за годину
 
 export async function POST(request: Request) {
   try {
-    const { prompt, context } = await request.json();
-    const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+    if (request.headers.get('content-type')?.toLowerCase().replace(/\s/g, '').replace(/;.*/, '') !== 'application/json') {
+      return NextResponse.json({ text: 'Content-Type має бути application/json' }, { status: 400 });
+    }
 
+    const body = await request.json();
+    const prompt = typeof body?.prompt === 'string' ? body.prompt.trim().slice(0, MAX_PROMPT_LEN) : '';
+    if (!prompt) {
+      return NextResponse.json({ text: 'Потрібно передати prompt' }, { status: 400 });
+    }
+
+    const kv = await getKV();
+    const { allowed } = await checkRateLimit(kv, 'ai', getClientIp(request), AI_LIMIT);
+    if (!allowed) {
+      return NextResponse.json({ text: 'Забагато запитів. Спробуйте пізніше.' }, { status: 429 });
+    }
+
+    const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
     if (!GROQ_API_KEY) {
       return NextResponse.json(
         { text: "LIGHT AI: не налаштовано ключ Groq (GROQ_API_KEY)." },
@@ -12,6 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const context = body?.context;
     const warDay = context?.warDay ?? "—";
     const usd = context?.markets?.usd ?? "—";
 
@@ -34,7 +54,7 @@ export async function POST(request: Request) {
           },
           {
             role: "user",
-            content: prompt
+            content: prompt.slice(0, MAX_PROMPT_LEN)
           }
         ],
         temperature: 0.7,

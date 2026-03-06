@@ -18,7 +18,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ results: [] });
     }
 
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
+    const safeQuery = String(query).trim().slice(0, 200);
+    if (!safeQuery) {
+      return NextResponse.json({ results: [] });
+    }
+
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(safeQuery)}`;
     
     const response = await fetch(url);
     const data = await response.json();

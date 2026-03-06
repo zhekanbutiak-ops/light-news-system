@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getKV } from '@/lib/kv';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+
+const SEND_NEWS_LIMIT = 10; // макс. звернень на IP за годину
 
 /**
  * POST /api/send-news
@@ -6,6 +10,10 @@ import { NextRequest, NextResponse } from 'next/server';
  * Потрібні: TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID (числовий chat_id особистого чату з ботом).
  */
 export async function POST(req: NextRequest) {
+  if (req.headers.get('content-type')?.toLowerCase().replace(/\s/g, '').replace(/;.*/, '') !== 'application/json') {
+    return NextResponse.json({ error: 'Content-Type має бути application/json' }, { status: 400 });
+  }
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
@@ -16,6 +24,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const kv = await getKV();
+  const ip = getClientIp(req);
+  const { allowed } = await checkRateLimit(kv, 'sendnews', ip, SEND_NEWS_LIMIT);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Забагато звернень. Спробуйте пізніше (ліміт на годину).' },
+      { status: 429 }
+    );
+  }
+
   let body: { title?: string; text?: string; link?: string };
   try {
     body = await req.json();
@@ -23,13 +41,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const title = typeof body.title === 'string' ? body.title.trim() : '';
-  const text = typeof body.text === 'string' ? body.text.trim() : '';
-  const link = typeof body.link === 'string' ? body.link.trim() : '';
+  const rawTitle = typeof body.title === 'string' ? body.title.trim() : '';
+  const rawText = typeof body.text === 'string' ? body.text.trim() : '';
+  const rawLink = typeof body.link === 'string' ? body.link.trim() : '';
 
-  if (!title && !text) {
+  if (!rawTitle && !rawText) {
     return NextResponse.json({ error: 'Потрібно заповнити заголовок або текст' }, { status: 400 });
   }
+
+  const MAX_TITLE = 300;
+  const MAX_TEXT = 3000;
+  const MAX_LINK = 500;
+  if (rawTitle.length > MAX_TITLE || rawText.length > MAX_TEXT || rawLink.length > MAX_LINK) {
+    return NextResponse.json(
+      { error: `Перевищено ліміт: заголовок до ${MAX_TITLE}, текст до ${MAX_TEXT}, посилання до ${MAX_LINK} символів` },
+      { status: 400 }
+    );
+  }
+
+  const title = rawTitle.slice(0, MAX_TITLE);
+  const text = rawText.slice(0, MAX_TEXT);
+  const link = rawLink.slice(0, MAX_LINK);
 
   const lines: string[] = ['📩 Новина з сайту Light News', ''];
   if (title) lines.push(`📌 ${title}`);
