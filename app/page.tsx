@@ -250,13 +250,15 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
+  const DIGEST_FALLBACK = 'Головне: актуальні події за сьогоднішніми заголовками.';
+
   // AI-дайджест: одне речення з поточних заголовків
   useEffect(() => {
     if (news.length < 3) {
       setDigest(null);
       return;
     }
-    const headlines = news.slice(0, 10).map((n) => n.title);
+    const headlines = news.slice(0, 10).map((n) => n.title).filter(Boolean);
     setDigestLoading(true);
     setDigest(null);
     fetch('/api/digest', {
@@ -266,9 +268,11 @@ export default function Home() {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.digest) setDigest(data.digest);
+        setDigest(typeof data?.digest === 'string' ? data.digest : DIGEST_FALLBACK);
       })
-      .catch(() => {})
+      .catch(() => {
+        setDigest(DIGEST_FALLBACK);
+      })
       .finally(() => setDigestLoading(false));
   }, [activeCategory, news.length, news.slice(0, 5).map((n) => n.title).join('|')]);
 

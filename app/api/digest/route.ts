@@ -25,12 +25,13 @@ export async function POST(req: NextRequest) {
     const headlines: string[] = rawHeadlines
       .filter((h): h is string => typeof h === 'string')
       .map(h => h.trim().slice(0, MAX_HEADLINE_LEN));
+
+    const fallback = 'Головне: актуальні події за сьогоднішніми заголовками.';
     if (headlines.length === 0) {
-      return NextResponse.json({ digest: null, error: 'No headlines' }, { status: 400 });
+      return NextResponse.json({ digest: fallback });
     }
 
     const list = headlines.map((h, i) => `${i + 1}. ${h}`).join('\n');
-    const fallback = 'Головне: актуальні події за сьогоднішніми заголовками.';
 
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ digest: fallback });
