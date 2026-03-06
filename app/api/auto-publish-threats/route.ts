@@ -24,6 +24,11 @@ function stripChannelSignature(raw: string): string {
   return t.replace(/\s+/g, " ").trim();
 }
 
+/** Нормалізує рядок для порівняння (пробіли, обрізати). */
+function norm(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
 // Джерела про пуски, шахіди, тривоги — RSS з TG-каналів.
 // Отримай RSS: ch2rss.fflow.net або tg-channel-to-rss.vercel.app (вкажи @channel).
 // Публікується в наш канал тільки коли в цьому каналі з'являється новий пост (перевірка кожні 2 хв).
@@ -97,8 +102,12 @@ export async function GET(req: NextRequest) {
       const rawContent = latest.contentSnippet || latest.content || "";
       const cleaned = stripChannelSignature(rawContent);
       const trimmed = cleaned.slice(0, 400).trim();
-      const body = trimmed ? `\n\n${trimmed}${cleaned.length > 400 ? "…" : ""}` : "";
-      const message = title ? `<b>${title}</b>${body}` : (body || "—");
+      // Якщо опис той самий що й заголовок (або майже той самий) — не дублюємо текст у пості
+      const titleN = norm(title);
+      const bodyN = norm(trimmed);
+      const sameOrAlmost = !bodyN || bodyN === titleN || (bodyN.startsWith(titleN) && bodyN.length - titleN.length < 25);
+      const body = sameOrAlmost ? "" : (trimmed ? `\n\n${trimmed}${cleaned.length > 400 ? "…" : ""}` : "");
+      const message = title ? `<b>${title}</b>${body}` : (trimmed || "—");
 
       const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
