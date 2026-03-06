@@ -123,7 +123,7 @@ export async function GET(request: Request) {
     const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
 
     // Додаємо URL зображення з enclosure або з контенту (без випадкових picsum)
-    const itemsWithImage = uniqueItems.slice(0, 30).map((item: { link?: string; [k: string]: unknown }) => ({
+    const itemsWithImage = uniqueItems.slice(0, 30).map((item) => ({
       ...item,
       imageUrl: getImageUrl(item as Parameters<typeof getImageUrl>[0], item.link) || null,
     }));
