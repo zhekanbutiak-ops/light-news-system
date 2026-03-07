@@ -46,6 +46,7 @@ export default function Home() {
   const [newAdText, setNewAdText] = useState("");
   const [stats, setStats] = useState({ online: null as number | null, today: 4850, total: 128430 });
   const visitorIdRef = React.useRef<string | null>(null);
+  const tensionSetOnceRef = React.useRef(false);
   const [tensionLevel, setTensionLevel] = useState(4);
   const [tensionLabel, setTensionLabel] = useState("Стабільно");
 
@@ -158,9 +159,13 @@ export default function Home() {
       const data = await response.json();
       if (data.items) {
         const items = data.items.slice(0, 30);
-        const { level, label } = computeTensionFromNews(items);
-        setTensionLevel(level);
-        setTensionLabel(label);
+        // Напругу оновлюємо лише раз за сесію (при першому завантаженні), щоб не стрибала при зміні розділу
+        if (!tensionSetOnceRef.current) {
+          const { level, label } = computeTensionFromNews(items);
+          setTensionLevel(level);
+          setTensionLabel(label);
+          tensionSetOnceRef.current = true;
+        }
         setNews(items.map((item: any, index: number) => ({
           id: `${category}-${index}-${Date.now()}`,
           time: item.pubDate ? new Date(item.pubDate).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }) : "--:--",
@@ -259,10 +264,10 @@ export default function Home() {
 
   const DIGEST_FALLBACK = 'Головне: актуальні події за сьогоднішніми заголовками.';
 
-  // AI-дайджест: одне речення з поточних заголовків
+  // AI-дайджест тільки для розділу «Головне», щоб був один консистентний фокус дня
   useEffect(() => {
-    if (news.length < 3) {
-      setDigest(null);
+    if (activeCategory !== 'Головне' || news.length < 3) {
+      if (activeCategory !== 'Головне') setDigest(null);
       return;
     }
     const headlines = news.slice(0, 10).map((n) => n.title).filter(Boolean);
@@ -275,7 +280,8 @@ export default function Home() {
     })
       .then((r) => r.json())
       .then((data) => {
-        setDigest(typeof data?.digest === 'string' ? data.digest : DIGEST_FALLBACK);
+        const text = typeof data?.digest === 'string' ? data.digest : DIGEST_FALLBACK;
+        setDigest(text);
       })
       .catch(() => {
         setDigest(DIGEST_FALLBACK);
@@ -383,7 +389,11 @@ export default function Home() {
                         <span className="uppercase">{weather.city}</span>
                     </span>
                     <span className="text-red-500 animate-pulse shrink-0">● LIVE</span>
-                    <span className="text-[9px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full hidden sm:inline shrink-0">Напруга: {tensionLevel}/10</span>
+                    <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 min-h-[24px] px-2.5 py-1 rounded-lg border border-zinc-600/80 bg-zinc-800/50 text-[9px] font-mono font-semibold tracking-wide uppercase" title={`Інформаційна напруга за заголовками: ${tensionLabel}`}>
+                      <span className="text-zinc-500">Напруга</span>
+                      <span className={`font-bold ${tensionLevel <= 3 ? 'text-emerald-400' : tensionLevel <= 6 ? 'text-amber-400' : 'text-red-400'}`}>{tensionLevel}/10</span>
+                      <span className="text-zinc-400 truncate max-w-[72px]">{tensionLabel}</span>
+                    </span>
                 </div>
                 <div className="flex gap-2 sm:gap-3 md:gap-4 items-center shrink-0">
                     <div className="flex items-center gap-1 sm:gap-2 text-zinc-500 [&_a]:p-1.5 sm:[&_a]:p-0.5 [&_a]:rounded [&_a:hover]:text-zinc-300 [&_svg]:w-4 [&_svg]:h-4 [&_a]:min-w-[44px] [&_a]:min-h-[44px] sm:[&_a]:min-w-0 sm:[&_a]:min-h-0 [&_a]:flex [&_a]:items-center [&_a]:justify-center">
@@ -523,29 +533,32 @@ export default function Home() {
                       </nav>
                     </div>
 
-                    {/* Що в фокусі — AI-дайджест одним реченням */}
-                    <div className="rounded-xl overflow-hidden border border-zinc-800 bg-[#0a0a0c] p-4 shadow-lg">
+                    {/* Що в фокусі — AI-дайджест тільки для розділу Головне */}
+                    <div className={`rounded-xl overflow-hidden border p-4 shadow-lg ${darkMode ? 'border-zinc-800 bg-[#0a0a0c]' : 'border-zinc-200 bg-zinc-50'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[11px] sm:text-[10px] font-black uppercase tracking-wider text-blue-500">
                           Що в фокусі
                         </h3>
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" aria-hidden />
+                        {activeCategory === 'Головне' && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" aria-hidden />}
                       </div>
-                      {digestLoading && (
+                      {activeCategory !== 'Головне' && (
+                        <p className="text-[11px] text-zinc-500 italic">Перейдіть у розділ «Головне» для фокусу дня.</p>
+                      )}
+                      {activeCategory === 'Головне' && digestLoading && (
                         <p className="text-[11px] text-zinc-500 italic">Формуємо дайджест…</p>
                       )}
-                      {!digestLoading && digest && (
+                      {activeCategory === 'Головне' && !digestLoading && digest && (
                         <p className={`text-[14px] sm:text-[12px] leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                           {digest}
                         </p>
                       )}
-                      {!digestLoading && !digest && news.length >= 3 && (
+                      {activeCategory === 'Головне' && !digestLoading && !digest && news.length >= 3 && (
                         <p className="text-[11px] text-zinc-500 italic">Не вдалося зформивати дайджест.</p>
                       )}
-                      {!digestLoading && !digest && news.length < 3 && (
+                      {activeCategory === 'Головне' && !digestLoading && !digest && news.length < 3 && (
                         <p className="text-[11px] text-zinc-500 italic">Завантажте новини для дайджесту.</p>
                       )}
-                      {digest && (
+                      {activeCategory === 'Головне' && digest && (
                         <p className="text-[10px] text-zinc-600 mt-2 italic">
                           На основі {Math.min(10, news.length)} джерел
                         </p>
