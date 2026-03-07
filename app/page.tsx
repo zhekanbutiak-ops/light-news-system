@@ -54,6 +54,7 @@ export default function Home() {
   const [donateAmount, setDonateAmount] = useState("100");
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const poems = [
     "Борітеся — поборете, Вам Бог помагає! За вас правда, за вас слава і воля святая! (Т. Шевченко)",
@@ -265,6 +266,15 @@ export default function Home() {
 
   const DIGEST_FALLBACK = 'Головне: актуальні події за сьогоднішніми заголовками.';
 
+  // Блокувати скрол сторінки коли відкритий drawer (мобільна версія)
+  useEffect(() => {
+    if (drawerOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [drawerOpen]);
+
   // Свята: сьогодні, завтра (нагадування), або найближче — блок завжди видимий
   const holidayBlock = useMemo(() => {
     const now = new Date();
@@ -431,8 +441,16 @@ export default function Home() {
 
         <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-2 sm:py-2.5 border-b backdrop-blur-md transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
             <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4">
-                {/* Мобільний: лого + дві кнопки в один ряд; десктоп — лише лого */}
+                {/* Мобільний: кнопка Меню (drawer) + лого + дві кнопки; десктоп — лише лого */}
                 <div className="flex items-center justify-between sm:justify-start shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDrawerOpen(true)}
+                      aria-label="Відкрити меню"
+                      className="lg:hidden flex items-center justify-center min-h-[40px] min-w-[40px] rounded-lg border border-zinc-600 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 touch-manipulation"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
                     <a href="/" className="flex items-center gap-1.5 group min-h-[36px] sm:min-h-[38px] py-1" aria-label="Light News — на головну">
                         <span className={`text-base sm:text-xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
                             Light<span className="text-blue-600">News</span>
@@ -461,6 +479,122 @@ export default function Home() {
                     </div>
                 </nav>
             </div>
+        </div>
+      </div>
+
+      {/* Drawer для мобільної версії: свята, джерела, фокус, донат */}
+      <div
+        className={`fixed inset-0 z-[4000] lg:hidden transition-opacity duration-300 ${drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        aria-hidden={!drawerOpen}
+      >
+        <div
+          className="absolute inset-0 bg-black/60"
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden
+        />
+        <div
+          className={`absolute top-0 right-0 bottom-0 w-full max-w-[min(100vw,320px)] ${darkMode ? "bg-zinc-900 border-l border-zinc-800" : "bg-white border-l border-zinc-200"} shadow-2xl flex flex-col transition-transform duration-300 ease-out pt-[env(safe-area-inset-top)]`}
+          style={{ transform: drawerOpen ? "translateX(0)" : "translateX(100%)" }}
+        >
+          <div className="flex items-center justify-between shrink-0 px-4 py-3 border-b border-zinc-700/50">
+            <span className="text-sm font-black uppercase tracking-wider">Меню</span>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Закрити меню"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-zinc-600 text-zinc-400 hover:bg-zinc-700 touch-manipulation"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-[env(safe-area-inset-bottom)]">
+            {/* Контент сайдбару — той самий що в <aside> */}
+            <div className="space-y-6">
+              {/* Свята */}
+              <div className={`rounded-xl border p-3.5 ${darkMode ? "bg-amber-950/30 border-amber-700/50" : "bg-amber-50 border-amber-200"}`}>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-2">
+                  {holidayBlock.today.length > 0 ? "Сьогодні" : holidayBlock.tomorrow.length > 0 ? "Завтра" : "Найближче"}
+                </p>
+                {holidayBlock.today.length > 0 && (
+                  <ul className="space-y-1 text-[12px] leading-snug">
+                    {holidayBlock.today.map((h, i) => (
+                      <li key={i} className={darkMode ? "text-amber-100" : "text-amber-900"}>
+                        {h.official && (
+                          <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                            <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                          </span>
+                        )}
+                        {h.title}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length > 0 && (
+                  <>
+                    <ul className="space-y-1 text-[12px] leading-snug">
+                      {holidayBlock.tomorrow.map((h, i) => (
+                        <li key={i} className={darkMode ? "text-amber-100" : "text-amber-900"}>
+                          {h.official && (
+                            <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                              <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                            </span>
+                          )}
+                          {h.title}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1.5 italic">Нагадування: завтра о 08:00 — пост у Telegram.</p>
+                  </>
+                )}
+                {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length === 0 && holidayBlock.next && (
+                  <p className="text-[12px] leading-snug">
+                    <span className={darkMode ? "text-amber-100" : "text-amber-900"}>{holidayBlock.next.dateLabel}</span>
+                    {" — "}
+                    {holidayBlock.next.items.map((h) => h.title).join(", ")}
+                  </p>
+                )}
+              </div>
+              {/* Офіційні джерела */}
+              <div className="border-b border-zinc-700 pb-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-3">Офіційні джерела</p>
+                <nav className="flex flex-col gap-0">
+                  <a href="https://alerts.in.ua/lite" target="_blank" rel="noopener noreferrer" className={`text-[13px] font-medium uppercase border-l-2 pl-3 py-3 -ml-px min-h-[44px] flex items-center ${darkMode ? "border-zinc-600 text-zinc-400 hover:border-red-600" : "border-zinc-300 text-zinc-600 hover:border-red-500"}`}>Карта тривог</a>
+                  <a href="https://www.bank.gov.ua/ua" target="_blank" rel="noopener noreferrer" className={`text-[13px] font-medium uppercase border-l-2 pl-3 py-3 -ml-px min-h-[44px] flex items-center ${darkMode ? "border-zinc-600 text-zinc-400 hover:border-red-600" : "border-zinc-300 text-zinc-600 hover:border-red-500"}`}>НБУ</a>
+                  <a href="https://www.kmu.gov.ua" target="_blank" rel="noopener noreferrer" className={`text-[13px] font-medium uppercase border-l-2 pl-3 py-3 -ml-px min-h-[44px] flex items-center ${darkMode ? "border-zinc-600 text-zinc-400 hover:border-red-600" : "border-zinc-300 text-zinc-600 hover:border-red-500"}`}>Уряд України</a>
+                  <a href="https://t.me/lightnews13" target="_blank" rel="noopener noreferrer" className={`text-[13px] font-medium uppercase border-l-2 pl-3 py-3 -ml-px min-h-[44px] flex items-center ${darkMode ? "border-zinc-600 text-zinc-400 hover:border-red-600" : "border-zinc-300 text-zinc-600 hover:border-red-500"}`}>Telegram</a>
+                </nav>
+              </div>
+              {/* Що в фокусі */}
+              <div className={`rounded-xl border p-4 ${darkMode ? "border-zinc-800 bg-[#0a0a0c]" : "border-zinc-200 bg-zinc-50"}`}>
+                <h3 className="text-[11px] font-black uppercase tracking-wider text-blue-500 mb-2">Що в фокусі</h3>
+                {activeCategory !== "Головне" && <p className="text-[11px] text-zinc-500 italic">Перейдіть у розділ «Головне» для фокусу дня.</p>}
+                {activeCategory === "Головне" && digestLoading && <p className="text-[11px] text-zinc-500 italic">Формуємо дайджест…</p>}
+                {activeCategory === "Головне" && !digestLoading && digest && <p className={`text-[13px] leading-relaxed ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>{digest}</p>}
+                {activeCategory === "Головне" && !digestLoading && !digest && news.length >= 3 && <p className="text-[11px] text-zinc-500 italic">Не вдалося зформивати дайджест.</p>}
+                {activeCategory === "Головне" && !digestLoading && !digest && news.length < 3 && <p className="text-[11px] text-zinc-500 italic">Завантажте новини для дайджесту.</p>}
+                {activeCategory === "Головне" && digest && <p className="text-[10px] text-zinc-600 mt-2 italic">На основі {Math.min(10, news.length)} джерел</p>}
+              </div>
+              {/* WAR DAY + Донат */}
+              <div className="pt-4 border-t border-red-600/20 space-y-4">
+                <p className="text-red-600 font-black text-[14px] italic uppercase text-center">WAR DAY: {warDay}</p>
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-zinc-900/60 border-zinc-700" : "bg-zinc-50 border-zinc-200"}`}>
+                  <p className={`text-lg font-black uppercase italic text-center ${darkMode ? "text-white" : "text-zinc-900"}`}>Light<span className="text-blue-600">News</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-red-600 mt-1 text-center">Підтримка проекту</p>
+                  <p className="text-[11px] italic opacity-70 mt-2 leading-relaxed text-center">Кожна гривня — це світло правди.</p>
+                  <div className="relative my-3">
+                    <input type="number" value={donateAmount} onChange={(e) => setDonateAmount(e.target.value)} className={`w-full bg-transparent border-b-2 border-red-600 text-center py-3 text-xl font-black outline-none ${darkMode ? "text-white" : "text-black"}`} />
+                    <span className="absolute right-0 bottom-2 text-[10px] font-bold opacity-30">₴</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {["50", "100", "500"].map((sum) => (
+                      <button key={sum} onClick={() => setDonateAmount(sum)} className={`py-3 text-[11px] font-black rounded-xl border-2 touch-manipulation ${donateAmount === sum ? "bg-red-600 border-red-600 text-white" : darkMode ? "border-zinc-600" : "border-zinc-300"}`}>{sum} ₴</button>
+                    ))}
+                  </div>
+                  <a href={`https://send.monobank.ua/3WbAugCy3w?a=${donateAmount}`} target="_blank" rel="noopener noreferrer" className="block w-full py-4 bg-red-600 text-white hover:bg-red-500 rounded-2xl text-[12px] font-black text-center uppercase tracking-widest touch-manipulation">Підтримати {donateAmount} ₴</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -521,7 +655,7 @@ export default function Home() {
             )}
           </div>
 
-          <aside className="lg:col-span-4 min-w-0">
+          <aside className="hidden lg:block lg:col-span-4 min-w-0">
             <div className={`p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
                     {/* Свята та визначні дати — блок завжди видимий: сьогодні / завтра / найближче */}
