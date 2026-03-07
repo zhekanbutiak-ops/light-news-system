@@ -409,29 +409,35 @@ export default function Home() {
             </div>
         </div>
 
-        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-3 sm:py-2.5 border-b backdrop-blur-md transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
-            <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-                <div className="flex items-center justify-center sm:justify-start shrink-0">
+        <div className={`${darkMode ? 'bg-[#0b0b0b]/90 border-zinc-800' : 'bg-[#fcfcfc]/95 border-zinc-200 shadow-md'} py-2 sm:py-2.5 border-b backdrop-blur-md transition-[transform,opacity] duration-300 ease-out`} style={{ willChange: 'transform' }}>
+            <div className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4">
+                {/* Мобільний: лого + дві кнопки в один ряд; десктоп — лише лого */}
+                <div className="flex items-center justify-between sm:justify-start shrink-0 gap-2">
                     <a href="/" className="flex items-center gap-1.5 group min-h-[36px] sm:min-h-[38px] py-1" aria-label="Light News — на головну">
-                        <span className={`text-lg sm:text-xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
+                        <span className={`text-base sm:text-xl font-black tracking-tighter uppercase italic transition-colors ${darkMode ? 'text-white group-hover:text-blue-400' : 'text-zinc-900 group-hover:text-blue-500'}`}>
                             Light<span className="text-blue-600">News</span>
                         </span>
                     </a>
+                    <div className="flex sm:hidden items-center gap-1">
+                        <button onClick={() => setShowSendNewsModal(true)} className="inline-flex items-center justify-center min-h-[32px] px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-blue-600 text-blue-600 touch-manipulation">Новину</button>
+                        <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center min-h-[32px] px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-red-600 text-red-600 touch-manipulation">Про нас</button>
+                    </div>
                 </div>
-                <nav className="flex justify-center w-full min-w-0 py-1 sm:py-0.5">
-                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-1 md:gap-2 min-w-0 max-w-full">
+                {/* Розділи: на мобільному — один ряд з горизонтальним скролом (компактно); на sm+ — wrap */}
+                <nav className="flex w-full min-w-0 py-0.5">
+                    <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-1 md:gap-2 min-w-0 w-full overflow-x-auto sm:overflow-visible justify-start sm:justify-center scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] pb-0.5">
                     {CATEGORIES.map(({ value, label, icon }) => (
                         <button
                             key={value}
                             onClick={() => setActiveCategory(value)}
-                            className={`inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3 sm:px-3 py-2 sm:py-1 rounded-full text-[10px] sm:text-[8px] font-black uppercase tracking-wider transition-all touch-manipulation shrink-0 ${activeCategory === value ? 'bg-red-600 text-white shadow-md shadow-red-900/20' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
+                            className={`inline-flex items-center justify-center gap-1 min-h-[32px] sm:min-h-[34px] px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-full text-[9px] sm:text-[8px] font-black uppercase tracking-wider transition-all touch-manipulation shrink-0 ${activeCategory === value ? 'bg-red-600 text-white shadow-md shadow-red-900/20' : (darkMode ? 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 border border-zinc-200')}`}
                         >
-                            <span className="opacity-90 shrink-0 [&_svg]:w-3.5 [&_svg]:h-3.5 sm:[&_svg]:w-3 sm:[&_svg]:h-3">{icon}</span>
+                            <span className="opacity-90 shrink-0 [&_svg]:w-3 [&_svg]:h-3 sm:[&_svg]:w-3 sm:[&_svg]:h-3">{icon}</span>
                             <span className="whitespace-nowrap">{label}</span>
                         </button>
                     ))}
-                    <button onClick={() => setShowSendNewsModal(true)} className="inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3 sm:px-3 py-2 sm:py-1 rounded-full text-[10px] sm:text-[8px] font-black uppercase tracking-wider border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Надіслати новину</button>
-                    <button onClick={() => setShowAboutModal(true)} className="inline-flex items-center justify-center gap-1.5 min-h-[40px] sm:min-h-[34px] px-3 sm:px-3 py-2 sm:py-1 rounded-full text-[10px] sm:text-[8px] font-black uppercase tracking-wider border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Про нас</button>
+                    <button onClick={() => setShowSendNewsModal(true)} className="hidden sm:inline-flex items-center justify-center gap-1 min-h-[34px] px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Надіслати новину</button>
+                    <button onClick={() => setShowAboutModal(true)} className="hidden sm:inline-flex items-center justify-center gap-1 min-h-[34px] px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all touch-manipulation shrink-0 whitespace-nowrap">Про нас</button>
                     </div>
                 </nav>
             </div>
