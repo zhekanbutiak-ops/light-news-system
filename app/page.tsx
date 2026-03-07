@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { getHolidaysForDate } from '@/lib/holidays';
 
 interface Ad {
   id: number;
@@ -264,6 +265,9 @@ export default function Home() {
 
   const DIGEST_FALLBACK = 'Головне: актуальні події за сьогоднішніми заголовками.';
 
+  // Свята та визначні дати на сьогодні (за Києвом), перераховується раз на день через dateLine
+  const todayHolidays = useMemo(() => getHolidaysForDate(new Date()), [dateLine]);
+
   // AI-дайджест тільки для розділу «Головне», щоб був один консистентний фокус дня
   useEffect(() => {
     if (activeCategory !== 'Головне' || news.length < 3) {
@@ -514,6 +518,21 @@ export default function Home() {
           <aside className="lg:col-span-4 min-w-0">
             <div className={`p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
+                    {/* Сьогодні — свята та визначні дати (за часом Києва) */}
+                    {todayHolidays.length > 0 && (
+                      <div className={`rounded-xl border p-3.5 sm:p-4 ${darkMode ? 'bg-amber-950/30 border-amber-700/50' : 'bg-amber-50 border-amber-200'}`}>
+                        <p className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-2">Сьогодні</p>
+                        <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
+                          {todayHolidays.map((h, i) => (
+                            <li key={i} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
+                              {h.official && <span className="mr-1.5" aria-hidden>🇺🇦</span>}
+                              {h.title}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* Ресурси — офіційні держ установ та сервіси */}
                     <div className="border-b border-zinc-800 pb-4">
                       <p className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-3">Офіційні джерела</p>
