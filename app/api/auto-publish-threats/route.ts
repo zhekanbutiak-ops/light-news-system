@@ -30,10 +30,9 @@ function norm(s: string): string {
 }
 
 // Джерела про пуски, шахіди, тривоги — RSS з TG-каналів.
-// Отримай RSS: ch2rss.fflow.net або tg-channel-to-rss.vercel.app (вкажи @channel).
-// Публікується в наш канал тільки коли в цьому каналі з'являється новий пост (перевірка кожні 2 хв).
-const THREAT_SOURCES = [
-  { name: "⚠️ ППО UA РАДАР", url: "https://ch2rss.fflow.net/PpoUaRadar1" },
+// Тимчасово вимкнено: поки не знайдено кращу альтернативу. Щоб увімкнути — поверни джерело в масив.
+const THREAT_SOURCES: { name: string; url: string }[] = [
+  // { name: "⚠️ ППО UA РАДАР", url: "https://ch2rss.fflow.net/PpoUaRadar1" },
 ];
 
 // Без KV: вузьке вікно, щоб не публікувати той самий пост кілька разів.

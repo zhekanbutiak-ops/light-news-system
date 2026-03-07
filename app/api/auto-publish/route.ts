@@ -6,9 +6,12 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const parser = new Parser();
 
 const KV_KEY_POSTED_LINKS = "ln_autopublish_posted_links";
+const KV_KEY_LAST_SOURCE_INDEX = "ln_autopublish_last_source_index";
 const MAX_POSTED_LINKS = 500; // скільки останніх посилань зберігати — повторів не буде ніколи
 
 import { getKV } from "@/lib/kv";
+import { saveNews } from "@/lib/db";
+import { postToFacebookPage } from "@/lib/facebook";
 
 async function wasAlreadyPosted(kv: Awaited<ReturnType<typeof getKV>>, link: string): Promise<boolean> {
   if (!kv || !link) return false;
@@ -25,7 +28,7 @@ async function markAsPosted(kv: Awaited<ReturnType<typeof getKV>>, link: string)
   await kv.set(KV_KEY_POSTED_LINKS, next);
 }
 
-// Різні джерела для автопублікації в TG (без дубляжу з одного сайту)
+// Різні джерела для автопублікації в TG; порядок = ротація (СВІТ → ЕКОНОМІКА → ВІЙНА → УКРАЇНА → …)
 const SOURCES = [
   { name: "🌍 СВІТ", url: "https://www.eurointegration.com.ua/rss/" },
   { name: "💰 ЕКОНОМІКА", url: "https://epravda.com.ua/rss/news/" },
@@ -51,19 +54,32 @@ export async function GET(req: NextRequest) {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  // 07:00–20:00 Київ — публікуємо в Telegram; 20:00–07:00 — зберігаємо в БД для ранкового дайджесту
+  const nowKyiv = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
+  const hour = nowKyiv.getHours();
+  const isNight = hour < 7 || hour >= 20;
+
   try {
-    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
+    if (!isNight && (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID)) {
       return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID missing" }, { status: 503 });
     }
 
     const kv = await getKV();
-    // Перемішуємо джерела, щоб не публікувати ту саму новину з різних розділів
-    const shuffled = [...SOURCES].sort(() => Math.random() - 0.5);
-    // Більший пул: якщо вночі новин не оновлюється, беремо першу ще не опубліковану з останніх 30
+    // Ротація джерел: чергуємо СВІТ → ЕКОНОМІКА → ВІЙНА → УКРАЇНА, щоб була різноманітність
+    const lastSourceIndexRaw = kv ? (await kv.get(KV_KEY_LAST_SOURCE_INDEX)) : null;
+    let lastSourceIndex = -1;
+    if (typeof lastSourceIndexRaw === "number" && Number.isInteger(lastSourceIndexRaw)) lastSourceIndex = lastSourceIndexRaw;
+    else if (typeof lastSourceIndexRaw === "string") {
+      const n = parseInt(lastSourceIndexRaw, 10);
+      if (!Number.isNaN(n) && n >= 0) lastSourceIndex = n;
+    }
+    if (lastSourceIndex >= SOURCES.length) lastSourceIndex = -1;
+    const nextSourceIndex = (lastSourceIndex + 1) % SOURCES.length;
+
     const FEED_TAKE = 30;
 
     const feeds = await Promise.all(
-      shuffled.map(async (s) => {
+      SOURCES.map(async (s) => {
         try {
           const f = await parser.parseURL(s.url);
           return { source: s, items: Array.isArray(f.items) ? f.items : [], ok: true as const };
@@ -80,7 +96,10 @@ export async function GET(req: NextRequest) {
     );
     if (candidates.length === 0) return NextResponse.json({ error: "No news" }, { status: 502 });
 
-    // Перший ще не опублікований з пулу (наприклад вночі, коли RSS не оновився — беремо з тих, що ще не публікували)
+    // Спершу шукаємо неопубліковану новину з джерела "на черзі" (ротація), потім з інших
+    const preferredOrder = Array.from({ length: SOURCES.length }, (_, i) => (nextSourceIndex + i) % SOURCES.length);
+    const sourceNameByIndex = (idx: number) => SOURCES[idx].name;
+
     let picked = candidates[0];
     let repost = false;
     if (kv) {
@@ -92,19 +111,48 @@ export async function GET(req: NextRequest) {
         if (!posted) fresh.push(c);
       }
       if (fresh.length > 0) {
-        picked = fresh[0];
+        // Обираємо першу "свіжу" новину з джерела на черзі, інакше з наступного в ротації
+        let chosen: typeof picked | null = null;
+        for (const idx of preferredOrder) {
+          const name = sourceNameByIndex(idx);
+          chosen = fresh.find((c) => c.source.name === name) ?? null;
+          if (chosen) break;
+        }
+        picked = chosen ?? fresh[0];
       } else {
         repost = true;
-        picked = candidates[0];
+        // При повторі теж дотримуємось ротації: перший кандидат з джерела на черзі
+        let chosen: typeof picked | null = null;
+        for (const idx of preferredOrder) {
+          const name = sourceNameByIndex(idx);
+          chosen = candidates.find((c) => c.source.name === name) ?? null;
+          if (chosen) break;
+        }
+        picked = chosen ?? candidates[0];
       }
     }
 
-    const latestNews = picked.it as { title?: string | null; link?: string | null; contentSnippet?: string | null; content?: string | null };
+    const latestNews = picked.it as { title?: string | null; link?: string | null; contentSnippet?: string | null; content?: string | null; pubDate?: string | null };
     const source = picked.source;
     if (!latestNews) return NextResponse.json({ error: "No news" }, { status: 502 });
 
     const originalTitle = latestNews.title ?? "";
     const originalText = latestNews.contentSnippet || latestNews.content || "";
+
+    // Нічний режим: зберігаємо в БД, не постимо в TG
+    if (isNight) {
+      const pubDate = latestNews.pubDate ? new Date(latestNews.pubDate) : new Date();
+      const saved = await saveNews({
+        title: originalTitle,
+        contentSnippet: originalText ? String(originalText).slice(0, 2000) : null,
+        link: String(latestNews.link || ""),
+        pubDate,
+        sourceName: source.name,
+      });
+      const sourceIdx = SOURCES.findIndex((s) => s.name === source.name);
+      if (kv && sourceIdx >= 0) await kv.set(KV_KEY_LAST_SOURCE_INDEX, sourceIdx);
+      return NextResponse.json({ saved: true, savedToDb: saved, reason: "night mode (07:00–20:00 Kyiv)", title: originalTitle });
+    }
 
     // AI-опис робимо best-effort: якщо Groq впав — все одно публікуємо
     let aiDescription = "Опис недоступний";
@@ -159,7 +207,28 @@ export async function GET(req: NextRequest) {
     }
 
     if (kv && latestNews.link && !repost) await markAsPosted(kv, latestNews.link);
-    return NextResponse.json({ success: true, repost, category: source.name, posted: originalTitle });
+    const sourceIdx = SOURCES.findIndex((s) => s.name === source.name);
+    if (kv && sourceIdx >= 0) await kv.set(KV_KEY_LAST_SOURCE_INDEX, sourceIdx);
+
+    // Автопост у Facebook (той самий контент, що й в TG) — best-effort
+    const fbMessage = [
+      `${source.name}${repost ? " (повтор)" : ""}`,
+      "",
+      originalTitle,
+      "",
+      String(aiDescription).trim(),
+      "",
+      `Читати повністю: ${latestNews.link || ""}`,
+    ].join("\n");
+    const fbPost = await postToFacebookPage(fbMessage, String(latestNews.link || "").trim() || undefined);
+
+    return NextResponse.json({
+      success: true,
+      repost,
+      category: source.name,
+      posted: originalTitle,
+      facebook: fbPost ? { id: fbPost.id } : undefined,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Error";
     return NextResponse.json({ error: message }, { status: 500 });

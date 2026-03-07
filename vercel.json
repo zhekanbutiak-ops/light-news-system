@@ -5,8 +5,12 @@
       "schedule": "*/30 * * * *"
     },
     {
-      "path": "/api/auto-publish-threats",
-      "schedule": "* * * * *"
+      "path": "/api/morning-digest",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/morning-silence",
+      "schedule": "59 5 * * *"
     }
   ]
 }
