@@ -6,6 +6,9 @@ import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 import { getNewsForPeriod } from '@/lib/db';
 
 const NEWS_RATE_LIMIT = 120; // макс. запитів на IP за годину (захист від DDoS/зловживань)
+const FEED_TIMEOUT_MS = 12_000; // таймаут одного RSS-запиту (щоб один блокований сайт не тримав усіх)
+const NEWS_CACHE_KEY = "ln_news_cache:";
+const NEWS_CACHE_TTL_SEC = 3600; // 1 год кешу останнього успішного результату (якщо всі фіди впали — показуємо кеш)
 
 // content:encoded для АрміяInform та інших WordPress-фідів (зображення в HTML)
 const parser = new Parser({
@@ -13,6 +16,26 @@ const parser = new Parser({
     item: [['content:encoded', 'contentEncoded']],
   },
 });
+
+/** Спільний тип для новини з RSS або БД (оголошено рано для parseFeedWithTimeout). */
+type NewsItemLike = { title?: string; link?: string; pubDate?: string; contentSnippet?: string; content?: string; [k: string]: unknown };
+
+/** Завантажити RSS з таймаутом (якщо сайт блокує IP або не відповідає — не чекаємо вічно). */
+async function parseFeedWithTimeout(url: string): Promise<{ items: NewsItemLike[] }> {
+  const urlWithCacheBust = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+  try {
+    const result = await Promise.race([
+      parser.parseURL(urlWithCacheBust),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), FEED_TIMEOUT_MS)
+      ),
+    ]);
+    return { items: (result?.items ?? []) as unknown as NewsItemLike[] };
+  } catch (e) {
+    console.error(`[news] feed failed ${url}:`, e instanceof Error ? e.message : e);
+    return { items: [] };
+  }
+}
 
 /** Витягує URL зображення: enclosure → media:* → перше <img> з HTML (для АрміяInform тощо); повний розмір з <a href> якщо є */
 function getImageUrl(item: { enclosure?: { url?: string }; content?: string; contentEncoded?: string; description?: string; [k: string]: unknown }, link?: string): string | null {
@@ -100,45 +123,65 @@ function getFallbackImageUrl(itemLink?: string): string {
   return defaultNews;
 }
 
-// Джерела з зображеннями в RSS (enclosure або <img> в контенті): TSN, UNIAN, РБК, Правда, LB.ua, АрміяInform
-// УНІАН: старі www.unian.ua/rss/* повертають 404, використовуємо rss.unian.net (українська стрічка)
+// Джерела: кілька URL на категорію (якщо один блокує IP або змінив адресу — беруться інші). + універсальний fallback нижче.
 const RSS_CONFIG: Record<string, string[]> = {
   "Головне": [
     "https://tsn.ua/rss/full.rss",
     "https://rss.unian.net/site/news_ukr.rss",
-    "https://www.rbc.ua/static/rss/all.ukr.rss.xml"
+    "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
+    "https://www.suspilne.media/rss/all.rss",
+    "https://www.ukrinform.ua/rss/news",
+    "https://www.pravda.com.ua/rss/view_mainnews/"
   ],
   "🛡️ Фронт": [
     "https://tsn.ua/rss/ato.rss",
     "https://rss.unian.net/site/news_ukr.rss",
-    "https://armyinform.com.ua/feed/"
+    "https://armyinform.com.ua/feed/",
+    "https://www.suspilne.media/rss/all.rss",
+    "https://www.ukrinform.ua/rss/news",
+    "https://censor.net/ua/feed"
   ],
   "🇺🇦 Україна": [
     "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/ukrayina.rss",
-    "https://lb.ua/rss/ukr/feed.xml"
+    "https://lb.ua/rss/ukr/feed.xml",
+    "https://www.suspilne.media/rss/all.rss",
+    "https://www.ukrinform.ua/rss/news"
   ],
   "🌍 Світ": [
     "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/svit.rss",
-    "https://rss.dw.com/rss-ukr-all"
+    "https://rss.dw.com/rss-ukr-all",
+    "https://www.suspilne.media/rss/all.rss",
+    "https://www.ukrinform.ua/rss/news"
   ],
   "💰 Економіка": [
     "https://rss.unian.net/site/news_ukr.rss",
     "https://tsn.ua/rss/groshi.rss",
-    "https://epravda.com.ua/rss/news/"
+    "https://epravda.com.ua/rss/news/",
+    "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
+    "https://www.suspilne.media/rss/all.rss"
   ],
   "⚠️ Breaking": [
     "https://www.rbc.ua/static/rss/all.ukr.rss.xml",
     "https://www.pravda.com.ua/rss/view_mainnews/",
-    "https://censor.net/ua/feed"
+    "https://censor.net/ua/feed",
+    "https://www.suspilne.media/rss/all.rss",
+    "https://rss.unian.net/site/news_ukr.rss"
   ]
 };
 
-const ALLOWED_CATEGORIES = new Set(Object.keys(RSS_CONFIG));
+// Універсальний fallback: коли всі фіди категорії не відповідають або блокують — пробуємо ці (рідко блокують).
+const RSS_FALLBACK_ANY = [
+  "https://rss.dw.com/rss-ukr-all",
+  "https://www.suspilne.media/rss/all.rss",
+  "https://www.ukrinform.ua/rss/news",
+  "https://www.pravda.com.ua/rss/view_mainnews/",
+  "https://tsn.ua/rss/full.rss",
+  "https://rss.unian.net/site/news_ukr.rss"
+];
 
-/** Спільний тип для новини з RSS або БД (для об'єднаного масиву). */
-type NewsItemLike = { title?: string; link?: string; pubDate?: string; contentSnippet?: string; content?: string; [k: string]: unknown };
+const ALLOWED_CATEGORIES = new Set(Object.keys(RSS_CONFIG));
 
 /** Нормалізація посилання для дедуплікації: без utm_*, fbclid, trailing slash — щоб одна стаття не дублювалась. */
 function normalizeLinkForDedup(link: string | undefined): string {
@@ -191,18 +234,17 @@ export async function GET(request: NextRequest) {
   try {
     const urls = RSS_CONFIG[category];
 
-    // Запускаємо запити до всіх сайтів одночасно для швидкості
-    const feedPromises = urls.map(url =>
-      parser.parseURL(`${url}?t=${Date.now()}`).catch(e => {
-        console.error(`Error fetching ${url}:`, e);
-        return { items: [] };
-      })
-    );
+    // Запити з таймаутом (щоб один блокований сайт не тримав усіх)
+    const feeds = await Promise.all(urls.map((url) => parseFeedWithTimeout(url)));
+    let rssItems: NewsItemLike[] = feeds.flatMap((f) => f.items);
 
-    const feeds = await Promise.all(feedPromises);
+    // Якщо жоден фід категорії не дав результатів — пробуємо універсальний fallback (інші домени, рідше блокують)
+    if (rssItems.length === 0 && RSS_FALLBACK_ANY.length > 0) {
+      const fallbackFeeds = await Promise.all(RSS_FALLBACK_ANY.map((url) => parseFeedWithTimeout(url)));
+      rssItems = fallbackFeeds.flatMap((f) => f.items);
+    }
 
     // Збираємо всі новини в один масив (RSS + БД)
-    const rssItems: NewsItemLike[] = feeds.flatMap((feed) => feed.items as NewsItemLike[]);
     const dbNews = await getNewsForPeriod(1, 50);
     const dbItems: NewsItemLike[] = dbNews.map((r) => ({
       title: r.title,
@@ -243,10 +285,32 @@ export async function GET(request: NextRequest) {
       : uniqueItems;
 
     // Додаємо URL зображення: enclosure / content:encoded (в т.ч. data-src для АрміяInform) або тематичний fallback
-    const itemsWithImage = filteredItems.slice(0, 30).map((item) => {
+    let itemsWithImage = filteredItems.slice(0, 30).map((item) => {
       const imageUrl = getImageUrl(item as unknown as Parameters<typeof getImageUrl>[0], item.link) || getFallbackImageUrl(item.link);
       return { ...item, imageUrl };
     });
+
+    // Якщо всі фіди + fallback не дали нічого — віддаємо останній успішний кеш (щоб на сайті не було порожньо)
+    if (itemsWithImage.length === 0 && kv) {
+      try {
+        const cached = await kv.get(`${NEWS_CACHE_KEY}${category}`);
+        const arr = Array.isArray(cached) ? cached : typeof cached === "string" ? JSON.parse(cached) as unknown[] : null;
+        if (Array.isArray(arr) && arr.length > 0) {
+          itemsWithImage = arr.slice(0, 30) as typeof itemsWithImage;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Зберігаємо успішний результат у кеш для наступного разу (коли фіди впадуть)
+    if (itemsWithImage.length > 0 && kv) {
+      try {
+        await kv.set(`${NEWS_CACHE_KEY}${category}`, JSON.stringify(itemsWithImage), { ex: NEWS_CACHE_TTL_SEC });
+      } catch {
+        // ignore
+      }
+    }
 
     return NextResponse.json({ items: itemsWithImage });
   } catch (error) {
