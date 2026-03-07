@@ -1,6 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getKV } from "@/lib/kv";
+import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 
-export async function GET(req: Request) {
+const SEARCH_LIMIT = 30; // макс. пошукових запитів на IP за годину
+
+export async function GET(req: NextRequest) {
+  const kv = await getKV();
+  const { allowed } = await checkRateLimit(kv, "search", getClientIp(req), SEARCH_LIMIT);
+  if (!allowed) {
+    return NextResponse.json({ error: "Забагато запитів. Спробуйте пізніше.", results: [] }, { status: 429 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q");

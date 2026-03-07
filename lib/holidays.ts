@@ -29,16 +29,43 @@ const HOLIDAYS: Record<string, HolidayItem[]> = {
   "12-25": [{ title: "Різдво Христове", official: true }],
 };
 
+function getKyivDate(date: Date): { month: number; day: number } {
+  const kyiv = new Date(date.toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
+  return { month: kyiv.getMonth() + 1, day: kyiv.getDate() };
+}
+
 /**
  * Повертає свята та визначні дати для заданої дати (за часом Києва).
- * date — JavaScript Date; для консистентності з cron використовуй дату в Europe/Kyiv.
  */
 export function getHolidaysForDate(date: Date): HolidayItem[] {
-  const kyiv = new Date(date.toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-  const month = String(kyiv.getMonth() + 1).padStart(2, "0");
-  const day = String(kyiv.getDate()).padStart(2, "0");
-  const key = `${month}-${day}`;
+  const { month, day } = getKyivDate(date);
+  const key = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   return HOLIDAYS[key] ?? [];
+}
+
+/** Свята на завтра (Київ): наступна дата в календарі після сьогодні. */
+export function getHolidaysForTomorrow(date: Date): HolidayItem[] {
+  const keys = Object.keys(HOLIDAYS).sort();
+  if (keys.length === 0) return [];
+  const { month, day } = getKyivDate(date);
+  const todayKey = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const nextKey = keys.find((k) => k > todayKey) ?? keys[0];
+  return HOLIDAYS[nextKey] ?? [];
+}
+
+const MONTH_NAMES = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+
+/** Найближче свято після заданої дати (дата + список). Якщо нічого — null. */
+export function getNextUpcomingHoliday(date: Date): { dateLabel: string; items: HolidayItem[] } | null {
+  const keys = Object.keys(HOLIDAYS).sort();
+  if (keys.length === 0) return null;
+  const { month, day } = getKyivDate(date);
+  const todayKey = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  let found = keys.find((k) => k > todayKey);
+  if (!found) found = keys[0];
+  const [m, d] = found.split("-").map(Number);
+  const dateLabel = `${d} ${MONTH_NAMES[m - 1]}`;
+  return { dateLabel, items: HOLIDAYS[found] ?? [] };
 }
 
 /** Текст для посту в TG: один рядок з усіма святами на сьогодні. */

@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
+import { getKV } from '@/lib/kv';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+
+const NEWS_RATE_LIMIT = 120; // макс. запитів на IP за годину (захист від DDoS/зловживань)
 
 // content:encoded для АрміяInform та інших WordPress-фідів (зображення в HTML)
 const parser = new Parser({
@@ -130,6 +134,8 @@ const RSS_CONFIG: Record<string, string[]> = {
   ]
 };
 
+const ALLOWED_CATEGORIES = new Set(Object.keys(RSS_CONFIG));
+
 function isEconomyRelated(text: string): boolean {
   const t = text.toLowerCase();
   const allow = [
@@ -148,12 +154,23 @@ function isEconomyRelated(text: string): boolean {
   return allow.some((k) => t.includes(k));
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const kv = await getKV();
+  const ip = getClientIp(request);
+  const { allowed } = await checkRateLimit(kv, 'news', ip, NEWS_RATE_LIMIT);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Забагато запитів. Спробуйте пізніше.', items: [] },
+      { status: 429, headers: { 'Retry-After': '3600' } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category') || "Головне";
+  const rawCategory = searchParams.get('category') || "Головне";
+  const category = ALLOWED_CATEGORIES.has(rawCategory) ? rawCategory : "Головне";
 
   try {
-    const urls = RSS_CONFIG[category] || RSS_CONFIG["Головне"];
+    const urls = RSS_CONFIG[category];
 
     // Запускаємо запити до всіх сайтів одночасно для швидкості
     const feedPromises = urls.map(url =>

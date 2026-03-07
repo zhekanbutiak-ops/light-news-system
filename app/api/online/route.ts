@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getKV } from "@/lib/kv";
+import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 
 const ONLINE_PREFIX = "ln_online:";
 const TTL_SEC = 120; // вважаємо "онлайн" якщо був пульс за останні 2 хв
-
-import { getKV } from "@/lib/kv";
+const ONLINE_POST_LIMIT = 60; // макс. пульсів на IP за годину (захист від зловживань)
 
 /** Пульс: клієнт каже "я тут". POST { id: string } */
 export async function POST(req: NextRequest) {
   const kv = await getKV();
+  const { allowed } = await checkRateLimit(kv, "online", getClientIp(req), ONLINE_POST_LIMIT);
+  if (!allowed) {
+    return NextResponse.json({ ok: false }, { status: 429 });
+  }
   try {
     const body = await req.json();
     const id = typeof body?.id === "string" ? body.id.slice(0, 64) : null;
