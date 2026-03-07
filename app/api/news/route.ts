@@ -137,6 +137,9 @@ const RSS_CONFIG: Record<string, string[]> = {
 
 const ALLOWED_CATEGORIES = new Set(Object.keys(RSS_CONFIG));
 
+/** Спільний тип для новини з RSS або БД (для об'єднаного масиву). */
+type NewsItemLike = { title?: string; link?: string; pubDate?: string; contentSnippet?: string; content?: string; [k: string]: unknown };
+
 /** Нормалізація посилання для дедуплікації: без utm_*, fbclid, trailing slash — щоб одна стаття не дублювалась. */
 function normalizeLinkForDedup(link: string | undefined): string {
   if (!link || typeof link !== "string") return "";
@@ -198,19 +201,17 @@ export async function GET(request: NextRequest) {
 
     const feeds = await Promise.all(feedPromises);
 
-    // Збираємо всі новини в один масив (RSS)
-    let allItems = feeds.flatMap(feed => feed.items);
-
-    // Додаємо новини з БД за останні 24 год (у т.ч. збережені вночі для дайджесту — на сайті вони теж мають бути)
+    // Збираємо всі новини в один масив (RSS + БД)
+    const rssItems: NewsItemLike[] = feeds.flatMap((feed) => feed.items as NewsItemLike[]);
     const dbNews = await getNewsForPeriod(1, 50);
-    const dbItems = dbNews.map((r) => ({
+    const dbItems: NewsItemLike[] = dbNews.map((r) => ({
       title: r.title,
       link: r.link,
       pubDate: r.pub_date instanceof Date ? r.pub_date.toISOString() : String(r.pub_date),
       contentSnippet: r.content_snippet ?? undefined,
       content: r.content_snippet ?? undefined,
     }));
-    allItems = [...dbItems, ...allItems];
+    const allItems: NewsItemLike[] = [...dbItems, ...rssItems];
 
     // Сортуємо за датою (найсвіжіші зверху)
     allItems.sort((a, b) => {
