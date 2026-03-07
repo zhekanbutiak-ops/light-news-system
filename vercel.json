@@ -16,9 +16,13 @@
       "path": "/api/morning-silence",
       "schedule": "59 5 * * *"
     },
+{
+  "path": "/api/daily-holiday",
+  "schedule": "0 5 * * *"
+    },
     {
-      "path": "/api/daily-holiday",
-      "schedule": "0 5 * * *"
+      "path": "/api/weekly-analytics",
+      "schedule": "0 5 * * 1"
     }
   ]
 }

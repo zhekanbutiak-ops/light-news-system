@@ -54,10 +54,10 @@ export async function GET(req: NextRequest) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // 07:00–20:00 Київ — публікуємо в Telegram; 20:00–07:00 — зберігаємо в БД для ранкового дайджесту
+  // 07:00–21:00 Київ — публікуємо в Telegram; 21:00–07:00 — зберігаємо в БД для ранкового дайджесту (включно з 20:00 та 20:30)
   const nowKyiv = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
   const hour = nowKyiv.getHours();
-  const isNight = hour < 7 || hour >= 20;
+  const isNight = hour < 7 || hour >= 21;
 
   try {
     if (!isNight && (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID)) {
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
       });
       const sourceIdx = SOURCES.findIndex((s) => s.name === source.name);
       if (kv && sourceIdx >= 0) await kv.set(KV_KEY_LAST_SOURCE_INDEX, sourceIdx);
-      return NextResponse.json({ saved: true, savedToDb: saved, reason: "night mode (07:00–20:00 Kyiv)", title: originalTitle });
+      return NextResponse.json({ saved: true, savedToDb: saved, reason: "night mode (21:00–07:00 Kyiv)", title: originalTitle });
     }
 
     // AI-опис робимо best-effort: якщо Groq впав — все одно публікуємо

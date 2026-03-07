@@ -94,6 +94,27 @@ export async function getNewsForDigest(hoursAgo: number = 10, onlyUnsent: boolea
   }
 }
 
+/** Новини за останні N днів (для тижневої аналітики). */
+export async function getNewsForPeriod(daysAgo: number, limit: number = 150): Promise<NewsRow[]> {
+  const sql = getSql();
+  if (!sql) return [];
+  try {
+    await initNewsTable();
+    const since = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+    const rows = await sql`
+      SELECT id, title, content_snippet, link, pub_date, source_name, is_sent_to_tg, created_at
+      FROM news
+      WHERE created_at >= ${since}
+      ORDER BY pub_date DESC
+      LIMIT ${limit}
+    `;
+    return rows as NewsRow[];
+  } catch (e) {
+    console.error("[db] getNewsForPeriod:", e);
+    return [];
+  }
+}
+
 /** Позначити новини як відправлені в TG (за id або за link). */
 export async function markNewsSentToTg(ids: number[]): Promise<void> {
   const sql = getSql();
