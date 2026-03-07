@@ -180,7 +180,8 @@ export default function Home() {
         image: item.imageUrl ? (item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : item.imageUrl) : null
       })));
     } catch (e) {
-      console.error("Помилка завантаження", e);
+      console.error("Помилка завантаження новин", e);
+      setNews([]);
     } finally {
       setIsLoadingNews(false);
     }
@@ -621,6 +622,28 @@ export default function Home() {
                   </div>
                 </article>
               ))
+            ) : news.length === 0 ? (
+              <div className={`rounded-2xl border p-8 sm:p-12 text-center ${darkMode ? "border-zinc-700 bg-zinc-800/50" : "border-zinc-200 bg-zinc-50"}`}>
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base mb-4">Новини зараз не завантажились — можливо, тимчасовий збій джерел або мережі.</p>
+                <p className="text-zinc-500 dark:text-zinc-500 text-xs mb-6">Спробуйте оновити сторінку або зайдіть пізніше. Свіжі новини також у нашому Telegram.</p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => fetchNews(activeCategory)}
+                    className="px-6 py-3 rounded-full bg-red-600 hover:bg-red-500 text-white text-sm font-bold uppercase tracking-wide transition-colors"
+                  >
+                    Оновити новини
+                  </button>
+                  <a
+                    href="https://t.me/lightnews13"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 rounded-full border border-[#2AABEE] text-[#2AABEE] hover:bg-[#2AABEE]/10 text-sm font-bold uppercase tracking-wide transition-colors"
+                  >
+                    Відкрити Telegram
+                  </a>
+                </div>
+              </div>
             ) : (
               news.map((item) => (
                 <article key={item.id} className="group flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">

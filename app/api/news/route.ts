@@ -312,6 +312,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Якщо ні фіди, ні кеш не дали нічого — один placeholder, щоб не було повністю порожньо (користувач побачить посилання на TG)
+    if (itemsWithImage.length === 0) {
+      const fallbackImage = process.env.NEXT_PUBLIC_FALLBACK_NEWS_IMAGE || "https://placehold.co/800x450/1a1a2e/c4b5a0?text=Light+News";
+      itemsWithImage = [
+        {
+          title: "Новини тимчасово недоступні",
+          link: "https://t.me/lightnews13",
+          pubDate: new Date().toISOString(),
+          contentSnippet: "Джерела не відповідають або мережа перевантажена. Свіжі новини завжди в нашому Telegram — натисніть, щоб відкрити канал. Можете також оновити сторінку через кілька хвилин.",
+          imageUrl: fallbackImage,
+        },
+      ];
+    }
+
     return NextResponse.json({ items: itemsWithImage });
   } catch (error) {
     console.error("[news] aggregation error:", error);
