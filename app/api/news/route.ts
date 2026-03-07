@@ -3,6 +3,7 @@ import Parser from 'rss-parser';
 import * as cheerio from 'cheerio';
 import { getKV } from '@/lib/kv';
 import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
+import { getNewsForPeriod } from '@/lib/db';
 
 const NEWS_RATE_LIMIT = 120; // макс. запитів на IP за годину (захист від DDoS/зловживань)
 
@@ -136,6 +137,21 @@ const RSS_CONFIG: Record<string, string[]> = {
 
 const ALLOWED_CATEGORIES = new Set(Object.keys(RSS_CONFIG));
 
+/** Нормалізація посилання для дедуплікації: без utm_*, fbclid, trailing slash — щоб одна стаття не дублювалась. */
+function normalizeLinkForDedup(link: string | undefined): string {
+  if (!link || typeof link !== "string") return "";
+  try {
+    const u = new URL(link.trim());
+    u.searchParams.forEach((_, key) => {
+      if (/^utm_|fbclid|ref|source$/i.test(key)) u.searchParams.delete(key);
+    });
+    let path = u.pathname.replace(/\/+$/, "") || "/";
+    return `${u.protocol}//${u.hostname.toLowerCase()}${path}${u.search}`;
+  } catch {
+    return link;
+  }
+}
+
 function isEconomyRelated(text: string): boolean {
   const t = text.toLowerCase();
   const allow = [
@@ -182,8 +198,19 @@ export async function GET(request: NextRequest) {
 
     const feeds = await Promise.all(feedPromises);
 
-    // Збираємо всі новини в один масив
+    // Збираємо всі новини в один масив (RSS)
     let allItems = feeds.flatMap(feed => feed.items);
+
+    // Додаємо новини з БД за останні 24 год (у т.ч. збережені вночі для дайджесту — на сайті вони теж мають бути)
+    const dbNews = await getNewsForPeriod(1, 50);
+    const dbItems = dbNews.map((r) => ({
+      title: r.title,
+      link: r.link,
+      pubDate: r.pub_date instanceof Date ? r.pub_date.toISOString() : String(r.pub_date),
+      contentSnippet: r.content_snippet ?? undefined,
+      content: r.content_snippet ?? undefined,
+    }));
+    allItems = [...dbItems, ...allItems];
 
     // Сортуємо за датою (найсвіжіші зверху)
     allItems.sort((a, b) => {
@@ -192,8 +219,10 @@ export async function GET(request: NextRequest) {
       return dateB - dateA;
     });
 
-    // Видаляємо дублікати за заголовком (якщо різні сайти запостили одне й те саме)
-    const uniqueItems = Array.from(new Map(allItems.map(item => [item.title, item])).values());
+    // Видаляємо дублікати за нормалізованим посиланням (RSS + БД, різні utm — одна новина)
+    const uniqueItems = Array.from(
+      new Map(allItems.map((item) => [normalizeLinkForDedup(item.link) || item.title || "", item])).values()
+    );
 
     // Для "Економіка" — підчищаємо нерелевантні (спорт/війна тощо), але не робимо розділ порожнім
     const filteredItems = category === "💰 Економіка"

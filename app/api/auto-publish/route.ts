@@ -7,7 +7,7 @@ const parser = new Parser();
 
 const KV_KEY_POSTED_LINKS = "ln_autopublish_posted_links";
 const KV_KEY_LAST_SOURCE_INDEX = "ln_autopublish_last_source_index";
-const MAX_POSTED_LINKS = 500; // скільки останніх посилань зберігати — повторів не буде ніколи
+const MAX_POSTED_LINKS = 500; // скільки останніх посилань зберігати — одна й та сама стаття (за посиланням) у TG не повторюється
 
 import { getKV } from "@/lib/kv";
 import { saveNews } from "@/lib/db";
