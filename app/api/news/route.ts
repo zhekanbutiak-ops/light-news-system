@@ -220,9 +220,14 @@ export async function GET(request: NextRequest) {
       return dateB - dateA;
     });
 
-    // Видаляємо дублікати за нормалізованим посиланням (RSS + БД, різні utm — одна новина)
+    // Видаляємо дублікати за нормалізованим посиланням (RSS + БД, різні utm — одна новина). Якщо link/title порожні — не зливаємо в один запис (уникальний ключ по індексу).
     const uniqueItems = Array.from(
-      new Map(allItems.map((item) => [normalizeLinkForDedup(item.link) || item.title || "", item])).values()
+      new Map(
+        allItems.map((item, i) => {
+          const key = normalizeLinkForDedup(item.link) || (item.title && item.title.trim()) || `_i${i}`;
+          return [key, item];
+        })
+      ).values()
     );
 
     // Для "Економіка" — підчищаємо нерелевантні (спорт/війна тощо), але не робимо розділ порожнім
@@ -245,6 +250,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items: itemsWithImage });
   } catch (error) {
-    return NextResponse.json({ error: "Помилка агрегації новин" }, { status: 500 });
+    console.error("[news] aggregation error:", error);
+    return NextResponse.json({ error: "Помилка агрегації новин", items: [] }, { status: 500 });
   }
 }

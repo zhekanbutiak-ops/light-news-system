@@ -159,8 +159,8 @@ export default function Home() {
     try {
       const response = await fetch(`/api/news?category=${encodeURIComponent(category)}`);
       const data = await response.json();
-      if (data.items) {
-        const items = data.items.slice(0, 30);
+      const items = Array.isArray(data?.items) ? data.items.slice(0, 30) : [];
+      if (items.length > 0) {
         // Напругу оновлюємо лише раз за сесію (при першому завантаженні), щоб не стрибала при зміні розділу
         if (!tensionSetOnceRef.current) {
           const { level, label } = computeTensionFromNews(items);
@@ -168,17 +168,17 @@ export default function Home() {
           setTensionLabel(label);
           tensionSetOnceRef.current = true;
         }
-        setNews(items.map((item: any, index: number) => ({
-          id: `${category}-${index}-${Date.now()}`,
-          time: item.pubDate ? new Date(item.pubDate).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }) : "--:--",
-          pubDateIso: item.pubDate ? new Date(item.pubDate).toISOString() : null,
-          title: item.title,
-          link: item.link,
-          content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
-          fullText: item.contentSnippet || item.content || item.description || item.contentEncoded || "",
-          image: item.imageUrl ? (item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : item.imageUrl) : null
-        })));
       }
+      setNews(items.map((item: any, index: number) => ({
+        id: `${category}-${index}-${Date.now()}`,
+        time: item.pubDate ? new Date(item.pubDate).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' }) : "--:--",
+        pubDateIso: item.pubDate ? new Date(item.pubDate).toISOString() : null,
+        title: item.title,
+        link: item.link,
+        content: (item.contentSnippet || item.content || "").slice(0, 450) + ((item.contentSnippet || item.content || "").length > 450 ? "..." : ""),
+        fullText: item.contentSnippet || item.content || item.description || item.contentEncoded || "",
+        image: item.imageUrl ? (item.imageUrl.startsWith('http') ? (item.imageUrl.startsWith('http://') ? item.imageUrl.replace('http://', 'https://') : item.imageUrl) : item.imageUrl) : null
+      })));
     } catch (e) {
       console.error("Помилка завантаження", e);
     } finally {
