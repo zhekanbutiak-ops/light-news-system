@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/online-midnight",
+      "schedule": "5 21 * * *"
+    },
+    {
       "path": "/api/auto-publish",
       "schedule": "*/30 * * * *"
     },

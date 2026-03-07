@@ -45,7 +45,7 @@ export default function Home() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [newAdText, setNewAdText] = useState("");
-  const [stats, setStats] = useState({ online: null as number | null, today: 4850, total: 128430 });
+  const [stats, setStats] = useState<{ online: number | null; today: number | null; yesterday: number | null; total: number | null }>({ online: null, today: null, yesterday: null, total: null });
   const visitorIdRef = React.useRef<string | null>(null);
   const tensionSetOnceRef = React.useRef(false);
   const [tensionLevel, setTensionLevel] = useState(4);
@@ -255,7 +255,13 @@ export default function Home() {
       fetch("/api/online")
         .then((r) => r.json())
         .then((data) => {
-          if (typeof data?.online === "number") setStats((prev) => ({ ...prev, online: data.online }));
+          setStats((prev) => ({
+            ...prev,
+            ...(typeof data?.online === "number" && { online: data.online }),
+            ...(typeof data?.today === "number" && { today: data.today }),
+            ...(typeof data?.yesterday === "number" && { yesterday: data.yesterday }),
+            ...(typeof data?.total === "number" && { total: data.total }),
+          }));
         })
         .catch(() => {});
     };
@@ -813,8 +819,9 @@ export default function Home() {
               <div className="flex flex-col items-center md:items-end gap-3 text-right">
                   <div className="flex gap-6 sm:gap-4 mb-0">
                       <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Online</p><p className="text-sm sm:text-xs font-black text-green-500">{stats.online !== null ? stats.online : "—"}</p></div>
-                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Today</p><p className="text-sm sm:text-xs font-black">{stats.today}</p></div>
-                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Total</p><p className="text-sm sm:text-xs font-black opacity-60">{stats.total}</p></div>
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Today</p><p className="text-sm sm:text-xs font-black">{stats.today !== null ? stats.today : "—"}</p></div>
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Yesterday</p><p className="text-sm sm:text-xs font-black">{stats.yesterday !== null ? stats.yesterday : "—"}</p></div>
+                      <div className="text-center"><p className="text-[10px] sm:text-[8px] font-bold opacity-40 uppercase">Total</p><p className="text-sm sm:text-xs font-black opacity-60">{stats.total !== null ? stats.total : "—"}</p></div>
                   </div>
                   <p className="text-[9px] sm:text-[7px] font-black uppercase tracking-[0.2em] opacity-30 italic">© 2026 Light News. Всі права захищені.</p>
               </div>
