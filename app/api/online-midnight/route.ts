@@ -40,11 +40,16 @@ export async function GET(req: NextRequest) {
     }
 
     const totalRaw = await kv.get(KEY_TOTAL);
-    const prevTotal = typeof totalRaw === "number" ? totalRaw : typeof totalRaw === "string" ? parseInt(totalRaw, 10) || 0 : 0;
-    const newTotal = prevTotal + count;
+    let prevTotal = 0;
+    if (typeof totalRaw === "number" && Number.isInteger(totalRaw)) prevTotal = totalRaw;
+    else if (typeof totalRaw === "string") prevTotal = parseInt(totalRaw, 10) || 0;
+    else if (Array.isArray(totalRaw) && totalRaw[0] != null) prevTotal = Number(totalRaw[0]) || 0;
+    const newTotal = Math.max(0, prevTotal + count);
 
-    await kv.set(KEY_YESTERDAY, count);
-    await kv.set(KEY_TOTAL, newTotal);
+    // ln_yesterday — на 2 дні; ln_total — на 10 років (накопичувач за весь час, щоб не скидався при default TTL на платформі)
+    const TEN_YEARS_SEC = 86400 * 365 * 10;
+    await kv.set(KEY_YESTERDAY, String(count), { ex: 86400 * 2 });
+    await kv.set(KEY_TOTAL, String(newTotal), { ex: TEN_YEARS_SEC });
 
     return NextResponse.json({
       ok: true,

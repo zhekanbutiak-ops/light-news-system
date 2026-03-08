@@ -14,6 +14,14 @@ function getDateKyiv(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Kyiv" }); // YYYY-MM-DD
 }
 
+function parseNumFromKV(raw: string | number | string[] | null): number {
+  if (raw == null) return 0;
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.floor(raw);
+  if (typeof raw === "string") return parseInt(raw, 10) || 0;
+  if (Array.isArray(raw) && raw[0] != null) return Number(raw[0]) || 0;
+  return 0;
+}
+
 /** Пульс: клієнт каже "я тут". POST { id: string } */
 export async function POST(req: NextRequest) {
   const kv = await getKV();
@@ -59,8 +67,8 @@ export async function GET() {
       kv.get(KEY_YESTERDAY),
       kv.get(KEY_TOTAL),
     ]);
-    const yesterday = typeof yesterdayRaw === "number" ? yesterdayRaw : typeof yesterdayRaw === "string" ? parseInt(yesterdayRaw, 10) || 0 : 0;
-    const total = typeof totalRaw === "number" ? totalRaw : typeof totalRaw === "string" ? parseInt(totalRaw, 10) || 0 : 0;
+    const yesterday = parseNumFromKV(yesterdayRaw);
+    const total = parseNumFromKV(totalRaw);
     return NextResponse.json({
       online,
       today: todayCount,
