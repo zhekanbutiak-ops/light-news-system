@@ -9,6 +9,31 @@ const NEWS_RATE_LIMIT = 300; // макс. запитів на IP за годин
 const FEED_TIMEOUT_MS = 12_000; // таймаут одного RSS-запиту (щоб один блокований сайт не тримав усіх)
 const NEWS_CACHE_KEY = "ln_news_cache:";
 const NEWS_CACHE_TTL_SEC = 3600; // 1 год кешу останнього успішного результату (якщо всі фіди впали — показуємо кеш)
+const NEWS_LABEL_KEY_PREFIX = "ln_news_label:";
+const NEWS_LABEL_TTL_SEC = 86400 * 7; // 7 днів — оцінка посту незмінна поки новина на сайті
+
+export type NewsLabel = "Важливе" | "Інформативне" | "Корисне";
+
+/** Класифікація за заголовком і текстом: сенс посту на сайті (зберігається по посиланню). */
+function classifyNewsLabel(title: string, snippet: string): NewsLabel {
+  const t = `${title ?? ""} ${snippet ?? ""}`.toLowerCase();
+  const important = [
+    "обстріл", "зсу", "знищено", "фронт", "війна", "ракета", "дрон", "окупант", "перемог", "втрат", "бойов", "атака",
+    "вторгнення", "санкці", "ядерн", "критичн", "надзвичайн", "евакуаці", "жертв", "загинул", "постраждал", "збито", "знищення",
+  ];
+  const informative = [
+    "курс", "нбу", "гривн", "долар", "євро", "економік", "інфляці", "бюджет", "закон", "указ", "рішення", "уряд",
+    "президент", "зустріч", "переговор", "договір", "даних", "статистик", "звіт", "оприлюднен", "індекс", "ринок",
+  ];
+  if (important.some((k) => t.includes(k))) return "Важливе";
+  if (informative.some((k) => t.includes(k))) return "Інформативне";
+  return "Корисне";
+}
+
+function newsLabelCacheKey(link: string): string {
+  const norm = normalizeLinkForDedup(link);
+  return `${NEWS_LABEL_KEY_PREFIX}${norm.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 180)}`;
+}
 
 // content:encoded для АрміяInform та інших WordPress-фідів (зображення в HTML)
 const parser = new Parser({
@@ -326,7 +351,34 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    return NextResponse.json({ items: itemsWithImage });
+    // Оцінка новини (сенс посту): Важливе / Інформативне / Корисне — зберігається по посиланню, незмінна поки новина на сайті
+    const itemsWithLabel = await Promise.all(
+      itemsWithImage.map(async (item) => {
+        const link = item.link;
+        let label: NewsLabel = "Корисне";
+        if (link) {
+          const key = newsLabelCacheKey(link);
+          if (kv) {
+            try {
+              const cached = await kv.get(key);
+              if (cached && typeof cached === "string" && (cached === "Важливе" || cached === "Інформативне" || cached === "Корисне")) {
+                label = cached as NewsLabel;
+              } else {
+                label = classifyNewsLabel(item.title ?? "", item.contentSnippet ?? item.content ?? "");
+                await kv.set(key, label, { ex: NEWS_LABEL_TTL_SEC });
+              }
+            } catch {
+              label = classifyNewsLabel(item.title ?? "", item.contentSnippet ?? item.content ?? "");
+            }
+          } else {
+            label = classifyNewsLabel(item.title ?? "", item.contentSnippet ?? item.content ?? "");
+          }
+        }
+        return { ...item, label };
+      })
+    );
+
+    return NextResponse.json({ items: itemsWithLabel });
   } catch (error) {
     console.error("[news] aggregation error:", error);
     return NextResponse.json({ error: "Помилка агрегації новин", items: [] }, { status: 500 });
