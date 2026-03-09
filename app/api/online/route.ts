@@ -8,7 +8,7 @@ const KEY_YESTERDAY = "ln_yesterday";
 const KEY_TOTAL = "ln_total";
 const TTL_SEC = 120; // вважаємо "онлайн" якщо був пульс за останні 2 хв
 const DAY_TTL_SEC = 86400 * 2; // ключі за день зберігаємо 2 дні (для підрахунку вчора)
-const ONLINE_POST_LIMIT = 60;
+const ONLINE_POST_LIMIT = 200; // пульси "я онлайн" за годину на IP (вкладки, оновлення)
 
 function getDateKyiv(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Kyiv" }); // YYYY-MM-DD

@@ -4,7 +4,7 @@ import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 import { getKV } from '@/lib/kv';
 
 const FEED_TIMEOUT_MS = 10_000;
-const RATE_LIMIT = 60;
+const RATE_LIMIT = 120; // окремий bucket від /api/news
 
 const parser = new Parser();
 
@@ -55,7 +55,7 @@ function overlapScore(refWords: string[], title: string): number {
 export async function GET(request: NextRequest) {
   const kv = await getKV();
   const ip = getClientIp(request);
-  const { allowed } = await checkRateLimit(kv, 'news', ip, RATE_LIMIT);
+  const { allowed } = await checkRateLimit(kv, 'news_compare', ip, RATE_LIMIT);
   if (!allowed) {
     return NextResponse.json({ error: 'Забагато запитів', topic: null, items: [] }, { status: 429 });
   }

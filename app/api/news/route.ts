@@ -5,7 +5,7 @@ import { getKV } from '@/lib/kv';
 import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 import { getNewsForPeriod } from '@/lib/db';
 
-const NEWS_RATE_LIMIT = 120; // макс. запитів на IP за годину (захист від DDoS/зловживань)
+const NEWS_RATE_LIMIT = 300; // макс. запитів на IP за годину (новини + оновлення вкладок)
 const FEED_TIMEOUT_MS = 12_000; // таймаут одного RSS-запиту (щоб один блокований сайт не тримав усіх)
 const NEWS_CACHE_KEY = "ln_news_cache:";
 const NEWS_CACHE_TTL_SEC = 3600; // 1 год кешу останнього успішного результату (якщо всі фіди впали — показуємо кеш)
