@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/** Підрахунок ключів по префіксу (count — розмір батчу SCAN, для 10k онлайн достатньо 5000). */
 async function countKeysByPrefix(kv: NonNullable<Awaited<ReturnType<typeof getKV>>>, prefix: string): Promise<number> {
   let n = 0;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- count-only iteration
-  for await (const _ of kv.scanIterator({ match: `${prefix}*`, count: 200 })) {
+  for await (const _ of kv.scanIterator({ match: `${prefix}*`, count: 5000 })) {
     n++;
   }
   return n;
@@ -69,12 +70,10 @@ export async function GET() {
     ]);
     const yesterday = parseNumFromKV(yesterdayRaw);
     const total = parseNumFromKV(totalRaw);
-    return NextResponse.json({
-      online,
-      today: todayCount,
-      yesterday,
-      total: total + todayCount,
-    });
+    return NextResponse.json(
+      { online, today: todayCount, yesterday, total: total + todayCount },
+      { headers: { "Cache-Control": "public, s-maxage=25, max-age=25, stale-while-revalidate=10" } }
+    );
   } catch {
     return NextResponse.json({ online: null, today: null, yesterday: null, total: null });
   }

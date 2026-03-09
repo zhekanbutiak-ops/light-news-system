@@ -215,7 +215,7 @@ export default function Home() {
       } catch (_) { /* погода опційно */ }
     })();
     // Авто-оновлення новин кожні 3 хв і при поверненні на вкладку
-    const newsInterval = setInterval(() => fetchNews(activeCategory), 3 * 60 * 1000);
+    const newsInterval = setInterval(() => fetchNews(activeCategory), 5 * 60 * 1000);
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') fetchNews(activeCategory);
     };
@@ -247,7 +247,7 @@ export default function Home() {
       fetch("/api/online", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).catch(() => {});
     };
     sendPulse();
-    const t = setInterval(sendPulse, 50 * 1000);
+    const t = setInterval(sendPulse, 60 * 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -268,7 +268,7 @@ export default function Home() {
         .catch(() => {});
     };
     fetchOnline();
-    const t = setInterval(fetchOnline, 25 * 1000);
+    const t = setInterval(fetchOnline, 30 * 1000);
     return () => clearInterval(t);
   }, []);
 
