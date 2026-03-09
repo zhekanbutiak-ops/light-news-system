@@ -55,6 +55,9 @@ export default function Home() {
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [compareData, setCompareData] = useState<{ topic: string; items: { source: string; title: string; link: string }[] } | null>(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [analysisByLink, setAnalysisByLink] = useState<Record<string, { objectivityScore: number; clickbaitWarning: string; summary: string } | 'loading'>>({});
 
   const poems = [
     "Борітеся — поборете, Вам Бог помагає! За вас правда, за вас слава і воля святая! (Т. Шевченко)",
@@ -315,6 +318,25 @@ export default function Home() {
       })
       .finally(() => setDigestLoading(false));
   }, [activeCategory, news.length, news.slice(0, 5).map((n) => n.title).join('|')]);
+
+  // Вау-фішка: одна тема — як подало 5 джерел (тільки для «Головне»)
+  useEffect(() => {
+    if (activeCategory !== 'Головне') {
+      setCompareData(null);
+      return;
+    }
+    setCompareLoading(true);
+    setCompareData(null);
+    fetch('/api/news/compare')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.topic && Array.isArray(data?.items) && data.items.length >= 2) {
+          setCompareData({ topic: data.topic, items: data.items });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCompareLoading(false));
+  }, [activeCategory]);
 
   return (
     <div className={`${darkMode ? 'bg-[#0b0b0b] text-zinc-100' : 'bg-[#fcfcfc] text-zinc-900'} min-h-[100dvh] min-h-screen min-w-0 transition-colors duration-500 font-sans relative pb-[env(safe-area-inset-bottom)]`}>
@@ -653,6 +675,43 @@ export default function Home() {
             <p className="sr-only">
               Актуальні новини України зараз: головні події, війна та фронт, економіка, світ. Курс долара сьогодні (НБУ), карта тривог, дайджест. Офіційні джерела.
             </p>
+            {activeCategory === "Головне" && (compareLoading || compareData) && (
+              <div className={`rounded-2xl sm:rounded-[2rem] border-2 overflow-hidden ${darkMode ? "border-amber-600/50 bg-amber-950/20" : "border-amber-500/50 bg-amber-50/80"}`}>
+                <div className="p-4 sm:p-6">
+                  <p className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.25em] text-amber-600 dark:text-amber-400 mb-1">
+                    Порівняй джерела
+                  </p>
+                  <h2 className="text-lg sm:text-xl font-[1000] uppercase italic tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
+                    Одна тема — як подало 5 джерел
+                  </h2>
+                  {compareLoading ? (
+                    <p className="text-sm text-zinc-500 italic">Завантажуємо заголовки…</p>
+                  ) : compareData ? (
+                    <>
+                      <p className="text-[13px] sm:text-sm opacity-80 mb-4 line-clamp-2">{compareData.topic}</p>
+                      <ul className="space-y-2 sm:space-y-3">
+                        {compareData.items.map((row, i) => (
+                          <li key={i} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+                            <span className={`shrink-0 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded ${darkMode ? "bg-amber-900/50 text-amber-300" : "bg-amber-200 text-amber-900"}`}>
+                              {row.source}
+                            </span>
+                            <a
+                              href={row.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`text-[13px] sm:text-sm font-medium hover:underline leading-snug ${darkMode ? "text-amber-50" : "text-zinc-800"}`}
+                            >
+                              {row.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-3 italic">Порівняй. Думай. Обирай джерела.</p>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            )}
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
@@ -722,6 +781,57 @@ export default function Home() {
                       </svg>
                       Підписатися на канал
                     </a>
+                    {/* Детектор маніпуляцій: кнопка або результат аналізу */}
+                    <div className={`mt-4 pt-4 border-t ${darkMode ? 'border-zinc-700/80' : 'border-zinc-200'}`}>
+                      {analysisByLink[item.link] === 'loading' ? (
+                        <p className="text-[12px] text-zinc-500 italic">Аналіз ШІ…</p>
+                      ) : analysisByLink[item.link] && analysisByLink[item.link] !== 'loading' ? (
+                        (() => {
+                          const a = analysisByLink[item.link] as { objectivityScore: number; clickbaitWarning: string; summary: string };
+                          return (
+                            <div className={`rounded-xl p-3 sm:p-4 ${darkMode ? 'bg-zinc-800/60 border border-zinc-700' : 'bg-zinc-100 border border-zinc-200'}`}>
+                              <p className="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Аналіз об'єктивності</p>
+                              <p className="text-lg font-black text-zinc-900 dark:text-zinc-100">Об'єктивність: {a.objectivityScore}%</p>
+                              {a.clickbaitWarning && <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-1">{a.clickbaitWarning}</p>}
+                              <p className="text-[12px] sm:text-[13px] leading-snug mt-2 opacity-90 italic">Коротко: {a.summary}</p>
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAnalysisByLink((prev) => ({ ...prev, [item.link]: 'loading' }));
+                            fetch('/api/analyze-news', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ title: item.title, content: item.content || item.fullText, link: item.link }),
+                            })
+                              .then((r) => r.json())
+                              .then((data) => {
+                                if (data.objectivityScore !== undefined) {
+                                  setAnalysisByLink((prev) => ({
+                                    ...prev,
+                                    [item.link]: {
+                                      objectivityScore: data.objectivityScore ?? 50,
+                                      clickbaitWarning: data.clickbaitWarning ?? '',
+                                      summary: data.summary ?? '',
+                                    },
+                                  }));
+                                } else {
+                                  setAnalysisByLink((prev => ({ ...prev, [item.link]: { objectivityScore: 50, clickbaitWarning: '', summary: data.error || 'Помилка аналізу.' } })));
+                                }
+                              })
+                              .catch(() => {
+                                setAnalysisByLink((prev) => ({ ...prev, [item.link]: { objectivityScore: 50, clickbaitWarning: '', summary: 'Сервіс тимчасово недоступний.' } }));
+                              });
+                          }}
+                          className={`text-[11px] sm:text-[10px] font-bold uppercase tracking-wide px-4 py-2 rounded-full border transition-colors touch-manipulation ${darkMode ? 'border-zinc-600 text-zinc-400 hover:bg-zinc-700/50' : 'border-zinc-300 text-zinc-600 hover:bg-zinc-200'}`}
+                        >
+                          Перевірити на маніпуляції
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))
