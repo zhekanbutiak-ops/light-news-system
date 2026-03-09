@@ -528,12 +528,25 @@ export default function Home() {
                     <ul className="space-y-1 text-[12px] leading-snug">
                       {holidayBlock.today.map((h, i) => (
                         <li key={`today-${i}`} className={darkMode ? "text-amber-100" : "text-amber-900"}>
-                          {h.official && (
-                            <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
-                              <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                            </span>
+                          {h.url ? (
+                            <a href={h.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 hover:underline focus:outline-none focus:underline">
+                              {h.official && (
+                                <span className="inline-flex flex-col mr-0.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                                  <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                </span>
+                              )}
+                              {h.title}
+                            </a>
+                          ) : (
+                            <>
+                              {h.official && (
+                                <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                                  <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                </span>
+                              )}
+                              {h.title}
+                            </>
                           )}
-                          {h.title}
                         </li>
                       ))}
                     </ul>
@@ -545,12 +558,25 @@ export default function Home() {
                     <ul className="space-y-1 text-[12px] leading-snug">
                       {holidayBlock.tomorrow.map((h, i) => (
                         <li key={`tomorrow-${i}`} className={darkMode ? "text-amber-100" : "text-amber-900"}>
-                          {h.official && (
-                            <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
-                              <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                            </span>
+                          {h.url ? (
+                            <a href={h.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 hover:underline focus:outline-none focus:underline">
+                              {h.official && (
+                                <span className="inline-flex flex-col mr-0.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                                  <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                </span>
+                              )}
+                              {h.title}
+                            </a>
+                          ) : (
+                            <>
+                              {h.official && (
+                                <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                                  <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                </span>
+                              )}
+                              {h.title}
+                            </>
                           )}
-                          {h.title}
                         </li>
                       ))}
                     </ul>
@@ -563,7 +589,16 @@ export default function Home() {
                     {" — "}
                     <span className={darkMode ? "text-amber-100" : "text-amber-900"}>{holidayBlock.next.dateLabel}</span>
                     {" — "}
-                    {holidayBlock.next.items.map((h) => h.title).join(", ")}
+                    {holidayBlock.next.items.map((h, i) => (
+                      <React.Fragment key={i}>
+                        {i > 0 && ", "}
+                        {h.url ? (
+                          <a href={h.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{h.title}</a>
+                        ) : (
+                          h.title
+                        )}
+                      </React.Fragment>
+                    ))}
                   </p>
                 )}
               </div>
@@ -707,13 +742,27 @@ export default function Home() {
                           <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
                             {holidayBlock.today.map((h, i) => (
                               <li key={`today-${i}`} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
-                                {h.official && (
-                                  <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
-                                    <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
-                                    <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                                  </span>
+                                {h.url ? (
+                                  <a href={h.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 hover:underline focus:outline-none focus:underline">
+                                    {h.official && (
+                                      <span className="inline-flex flex-col mr-0.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
+                                        <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
+                                        <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                      </span>
+                                    )}
+                                    {h.title}
+                                  </a>
+                                ) : (
+                                  <>
+                                    {h.official && (
+                                      <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
+                                        <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
+                                        <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                      </span>
+                                    )}
+                                    {h.title}
+                                  </>
                                 )}
-                                {h.title}
                               </li>
                             ))}
                           </ul>
@@ -725,13 +774,27 @@ export default function Home() {
                           <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
                             {holidayBlock.tomorrow.map((h, i) => (
                               <li key={`tomorrow-${i}`} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
-                                {h.official && (
-                                  <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
-                                    <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
-                                    <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                                  </span>
+                                {h.url ? (
+                                  <a href={h.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 hover:underline focus:outline-none focus:underline">
+                                    {h.official && (
+                                      <span className="inline-flex flex-col mr-0.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
+                                        <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
+                                        <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                      </span>
+                                    )}
+                                    {h.title}
+                                  </a>
+                                ) : (
+                                  <>
+                                    {h.official && (
+                                      <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
+                                        <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
+                                        <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                      </span>
+                                    )}
+                                    {h.title}
+                                  </>
                                 )}
-                                {h.title}
                               </li>
                             ))}
                           </ul>
@@ -744,7 +807,16 @@ export default function Home() {
                           {' — '}
                           <span className={darkMode ? 'text-amber-100' : 'text-amber-900'}>{holidayBlock.next.dateLabel}</span>
                           {' — '}
-                          {holidayBlock.next.items.map((h) => h.title).join(', ')}
+                          {holidayBlock.next.items.map((h, i) => (
+                            <React.Fragment key={i}>
+                              {i > 0 && ', '}
+                              {h.url ? (
+                                <a href={h.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{h.title}</a>
+                              ) : (
+                                h.title
+                              )}
+                            </React.Fragment>
+                          ))}
                         </p>
                       )}
                     </div>
