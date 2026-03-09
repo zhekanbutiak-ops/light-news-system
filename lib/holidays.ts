@@ -8,7 +8,10 @@ export type HolidayItem = { title: string; official?: boolean };
 // Ключ: "MM-DD", значення: масив свят на цей день (іноді кілька)
 const HOLIDAYS: Record<string, HolidayItem[]> = {
   "01-01": [{ title: "Новий рік", official: true }],
-  "01-07": [{ title: "Різдво Христове (за юліанським календарем)" }],
+  "01-07": [
+    { title: "Різдво Христове (за юліанським календарем)" },
+    { title: "Святвечір (Сочильник)" },
+  ],
   "01-22": [{ title: "День Соборності України", official: true }],
   "02-14": [{ title: "День вшанування учасників бойових дій на території інших держав" }],
   "02-23": [{ title: "День захисника Вітчизни (міжнародна традиція)" }],
@@ -43,14 +46,11 @@ export function getHolidaysForDate(date: Date): HolidayItem[] {
   return HOLIDAYS[key] ?? [];
 }
 
-/** Свята на завтра (Київ): наступна дата в календарі після сьогодні. */
+/** Свята на буквально завтра (наступний календарний день за часом Києва). */
 export function getHolidaysForTomorrow(date: Date): HolidayItem[] {
-  const keys = Object.keys(HOLIDAYS).sort();
-  if (keys.length === 0) return [];
-  const { month, day } = getKyivDate(date);
-  const todayKey = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const nextKey = keys.find((k) => k > todayKey) ?? keys[0];
-  return HOLIDAYS[nextKey] ?? [];
+  const kyiv = new Date(date.toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
+  kyiv.setDate(kyiv.getDate() + 1);
+  return getHolidaysForDate(kyiv);
 }
 
 const MONTH_NAMES = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];

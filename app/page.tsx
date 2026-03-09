@@ -517,30 +517,17 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-[env(safe-area-inset-bottom)]">
             {/* Контент сайдбару — той самий що в <aside> */}
             <div className="space-y-6">
-              {/* Свята */}
+              {/* Свята: сьогодні + завтра (кожен день — один або кілька подій) */}
               <div className={`rounded-xl border p-3.5 ${darkMode ? "bg-amber-950/30 border-amber-700/50" : "bg-amber-50 border-amber-200"}`}>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-2">
-                  {holidayBlock.today.length > 0 ? "Сьогодні" : holidayBlock.tomorrow.length > 0 ? "Завтра" : "Найближче"}
+                  Свята та дати
                 </p>
                 {holidayBlock.today.length > 0 && (
-                  <ul className="space-y-1 text-[12px] leading-snug">
-                    {holidayBlock.today.map((h, i) => (
-                      <li key={i} className={darkMode ? "text-amber-100" : "text-amber-900"}>
-                        {h.official && (
-                          <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
-                            <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                          </span>
-                        )}
-                        {h.title}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length > 0 && (
-                  <>
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold uppercase text-amber-600/90 dark:text-amber-400/90 mb-1">Сьогодні</p>
                     <ul className="space-y-1 text-[12px] leading-snug">
-                      {holidayBlock.tomorrow.map((h, i) => (
-                        <li key={i} className={darkMode ? "text-amber-100" : "text-amber-900"}>
+                      {holidayBlock.today.map((h, i) => (
+                        <li key={`today-${i}`} className={darkMode ? "text-amber-100" : "text-amber-900"}>
                           {h.official && (
                             <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
                               <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
@@ -550,11 +537,30 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
-                    <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1.5 italic">Нагадування: завтра о 08:00 — пост у Telegram.</p>
-                  </>
+                  </div>
+                )}
+                {holidayBlock.tomorrow.length > 0 && (
+                  <div className={holidayBlock.today.length > 0 ? "pt-2 border-t border-amber-700/40 dark:border-amber-600/30" : ""}>
+                    <p className="text-[10px] font-bold uppercase text-amber-600/90 dark:text-amber-400/90 mb-1">Завтра</p>
+                    <ul className="space-y-1 text-[12px] leading-snug">
+                      {holidayBlock.tomorrow.map((h, i) => (
+                        <li key={`tomorrow-${i}`} className={darkMode ? "text-amber-100" : "text-amber-900"}>
+                          {h.official && (
+                            <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden>
+                              <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" /><span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                            </span>
+                          )}
+                          {h.title}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1.5 italic">О 08:00 — пост у Telegram.</p>
+                  </div>
                 )}
                 {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length === 0 && holidayBlock.next && (
                   <p className="text-[12px] leading-snug">
+                    <span className="font-bold uppercase text-amber-600/90 dark:text-amber-400/90 text-[10px]">Найближче</span>
+                    {" — "}
                     <span className={darkMode ? "text-amber-100" : "text-amber-900"}>{holidayBlock.next.dateLabel}</span>
                     {" — "}
                     {holidayBlock.next.items.map((h) => h.title).join(", ")}
@@ -605,10 +611,13 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0 overflow-x-hidden">
+      <main id="main-content" className="max-w-[1440px] mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 py-6 sm:py-12 pb-36 sm:pb-12 w-full min-w-0 overflow-x-hidden" role="main" aria-label="Контент сторінки">
         <div className="grid lg:grid-cols-12 gap-8 sm:gap-16 min-w-0">
-          <div className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0">
-            <h1 className="sr-only">Головні новини України — Light News: фронт, економіка, світ</h1>
+          <section className="lg:col-span-8 space-y-10 sm:space-y-16 min-w-0" aria-labelledby="news-heading">
+            <h1 id="news-heading" className="sr-only">Головні новини України — Light News: фронт, економіка, світ</h1>
+            <p className="sr-only">
+              Актуальні новини України зараз: головні події, війна та фронт, економіка, світ. Курс долара сьогодні (НБУ), карта тривог, дайджест. Офіційні джерела.
+            </p>
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
@@ -649,7 +658,7 @@ export default function Home() {
                 <article key={item.id} className="group flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
                   <a href={item.link} target="_blank" rel="noopener noreferrer" className="w-full md:w-[320px] aspect-[16/10] bg-zinc-800 rounded-2xl sm:rounded-[2rem] overflow-hidden shrink-0 shadow-lg active:opacity-90 transition-opacity block">
                     {item.image ? (
-                      <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                      <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.title?.slice(0, 100) || "Новини України"} loading="lazy" decoding="async" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-zinc-700/80">
                         <svg className="w-12 h-12 sm:w-14 sm:h-14 text-zinc-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" /></svg>
@@ -682,36 +691,22 @@ export default function Home() {
                 </article>
               ))
             )}
-          </div>
+          </section>
 
-          <aside className="hidden lg:block lg:col-span-4 min-w-0">
+          <aside className="hidden lg:block lg:col-span-4 min-w-0" aria-label="Додаткова інформація">
             <div className={`p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[3rem] border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl'}`}>
                 <div className="space-y-8">
-                    {/* Свята та визначні дати — блок завжди видимий: сьогодні / завтра / найближче */}
+                    {/* Свята та визначні дати: сьогодні + завтра (кожен день може мати кілька подій) */}
                     <div className={`rounded-xl border p-3.5 sm:p-4 ${darkMode ? 'bg-amber-950/30 border-amber-700/50' : 'bg-amber-50 border-amber-200'}`}>
                       <p className="text-[10px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-2">
-                        {holidayBlock.today.length > 0 ? 'Сьогодні' : holidayBlock.tomorrow.length > 0 ? 'Завтра' : 'Найближче'}
+                        Свята та дати
                       </p>
                       {holidayBlock.today.length > 0 && (
-                        <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
-                          {holidayBlock.today.map((h, i) => (
-                            <li key={i} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
-                              {h.official && (
-                              <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
-                                <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
-                                <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
-                              </span>
-                            )}
-                              {h.title}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length > 0 && (
-                        <>
+                        <div className="mb-3">
+                          <p className="text-[10px] font-bold uppercase text-amber-600/90 dark:text-amber-400/90 mb-1">Сьогодні</p>
                           <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
-                            {holidayBlock.tomorrow.map((h, i) => (
-                              <li key={i} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
+                            {holidayBlock.today.map((h, i) => (
+                              <li key={`today-${i}`} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
                                 {h.official && (
                                   <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
                                     <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
@@ -722,11 +717,31 @@ export default function Home() {
                               </li>
                             ))}
                           </ul>
-                          <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1.5 italic">Нагадування: завтра о 08:00 — пост у Telegram.</p>
-                        </>
+                        </div>
+                      )}
+                      {holidayBlock.tomorrow.length > 0 && (
+                        <div className={holidayBlock.today.length > 0 ? 'pt-2 border-t border-amber-700/40 dark:border-amber-600/30' : ''}>
+                          <p className="text-[10px] font-bold uppercase text-amber-600/90 dark:text-amber-400/90 mb-1">Завтра</p>
+                          <ul className="space-y-1 text-[12px] sm:text-[11px] leading-snug">
+                            {holidayBlock.tomorrow.map((h, i) => (
+                              <li key={`tomorrow-${i}`} className={darkMode ? 'text-amber-100' : 'text-amber-900'}>
+                                {h.official && (
+                                  <span className="inline-flex flex-col mr-1.5 w-4 h-3 rounded-sm overflow-hidden shrink-0 align-middle border border-amber-600/30" aria-hidden title="Державне свято">
+                                    <span className="block w-full flex-1 min-h-0 bg-[#0057B7]" />
+                                    <span className="block w-full flex-1 min-h-0 bg-[#FFD700]" />
+                                  </span>
+                                )}
+                                {h.title}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1.5 italic">О 08:00 — пост у Telegram.</p>
+                        </div>
                       )}
                       {holidayBlock.today.length === 0 && holidayBlock.tomorrow.length === 0 && holidayBlock.next && (
                         <p className="text-[12px] sm:text-[11px] leading-snug">
+                          <span className="font-bold uppercase text-amber-600/90 dark:text-amber-400/90 text-[10px]">Найближче</span>
+                          {' — '}
                           <span className={darkMode ? 'text-amber-100' : 'text-amber-900'}>{holidayBlock.next.dateLabel}</span>
                           {' — '}
                           {holidayBlock.next.items.map((h) => h.title).join(', ')}

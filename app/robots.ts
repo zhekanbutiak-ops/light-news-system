@@ -7,8 +7,10 @@ const baseUrl =
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: ["/api/"] },
+      { userAgent: "*", allow: "/", disallow: ["/api/", "/auth/"] },
+      { userAgent: "Yandex", allow: "/", disallow: ["/api/", "/auth/"] },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }
