@@ -26,7 +26,7 @@ function parseGeminiResponse(text: string): { objectivityScore: number; clickbai
   const objectivityScore = numMatch ? Math.min(100, Math.max(0, parseInt(numMatch[1], 10))) : 50;
   const clickMatch = text.match(/КЛІКБЕЙТ[:\s]*(так|ні|yes|no|низький|середній|високий)/i) || text.match(/клікбейт[:\s]*(так|ні)/i);
   const clickbaitWarning = clickMatch ? (clickMatch[1].toLowerCase().includes('так') || clickMatch[1].toLowerCase().includes('yes') || clickMatch[1].toLowerCase().includes('високий') ? 'Можливий клікбейт' : '') : '';
-  const summaryMatch = text.match(/КОРОТКО[:\s]*(.+?)(?=\n|$)/is) || text.match(/коротко[:\s]*(.+?)(?=\n|$)/is);
+  const summaryMatch = text.match(/КОРОТКО[:\s]*([\s\S]+?)(?=\n|$)/i) || text.match(/коротко[:\s]*([\s\S]+?)(?=\n|$)/i);
   const summary = summaryMatch ? summaryMatch[1].trim().slice(0, 300) : text.slice(0, 200).trim();
   return { objectivityScore, clickbaitWarning, summary: summary || 'Аналіз недоступний.' };
 }
