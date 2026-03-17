@@ -233,6 +233,65 @@ function isEconomyRelated(text: string): boolean {
   return allow.some((k) => t.includes(k));
 }
 
+function isFrontRelated(text: string): boolean {
+  const t = text.toLowerCase();
+  const allow = [
+    "фронт", "зсу", "гш", "генштаб", "сирськ", "ссo", "ссо", "ппо", "ппр",
+    "ракета", "дрон", "шахед", "калібр", "іскандер", "авіабомб", "каб", "артил",
+    "обстріл", "вибух", "повітрян", "тривог", "пуск", "збито",
+    "окуп", "окупант", "рф", "росі", "ворог", "наступ", "контрнаступ",
+    "полон", "обмін", "евакуац", "поранен", "загинул", "втрат",
+    "донецьк", "луганськ", "харків", "херсон", "запоріж", "сум", "черніг", "микола",
+  ];
+  const block = [
+    "пральн", "машин", "кухн", "рецепт", "дієт", "гороскоп", "астрол",
+    "зірк", "актор", "співач", "шоу", "скандал", "роман", "весіл", "вагіт",
+    "мод", "краса", "манікюр", "психолог", "тест", "лайфхак", "порада",
+  ];
+  if (block.some((k) => t.includes(k))) return false;
+  return allow.some((k) => t.includes(k));
+}
+
+function isUkraineRelated(text: string): boolean {
+  const t = text.toLowerCase();
+  const allow = [
+    "україн", "київ", "львів", "одес", "дніпр", "харків", "херсон", "запоріж", "микола", "черніг", "сум", "полтав", "вінниц", "житомир", "черкас", "івано-франк", "терноп", "хмельниц", "луцьк", "рівн", "ужгород", "чернівц",
+    "вр", "верховн", "кабмін", "уряд", "міністр", "мвс", "сбу", "дбр", "набу", "нп", "поліц", "прокурат", "суд",
+    "ова", "кмва", "мер", "громад", "школ", "лікарн", "транспорт", "метро", "комунал", "тариф", "відключен",
+    "нбу", "пенс", "виплат", "субсид",
+  ];
+  const block = [
+    "пральн", "машин", "кухн", "рецепт", "дієт", "гороскоп", "астрол",
+    "зірк", "актор", "співач", "шоу", "скандал", "роман", "весіл", "вагіт",
+    "мод", "краса", "манікюр", "психолог", "тест", "лайфхак",
+    "сша", "китай", "інді", "ізраїл", "іран", "туреч", "німеч", "франц", "британ", "італ", "іспан", "польщ", "угорщ", "румун", "словач", "чех", "нато", "оон", "єс", "євросоюз",
+  ];
+  if (block.some((k) => t.includes(k))) return false;
+  return allow.some((k) => t.includes(k));
+}
+
+function isWorldRelated(text: string): boolean {
+  const t = text.toLowerCase();
+  const allow = [
+    "світ", "міжнарод", "дипломат", "переговор", "візит", "саміт", "форум",
+    "сша", "байден", "трамп", "держдеп", "конгрес",
+    "єс", "євросоюз", "європ", "єврокоміс", "європарламент",
+    "нато", "оон", "обсе", "g7", "g20",
+    "санкц", "ембарго", "мито", "екстрад", "трибунал",
+    "німеч", "франц", "британ", "італ", "іспан", "польщ", "угорщ", "румун", "словач", "чех", "балті",
+    "китай", "інді", "япон", "південн коре", "північн коре",
+    "ізраїл", "палест", "газ", "іран", "сауд", "туреч", "сирі",
+  ];
+  const block = [
+    "пральн", "машин", "кухн", "рецепт", "дієт", "гороскоп", "астрол",
+    "зірк", "актор", "співач", "шоу", "скандал", "роман", "весіл", "вагіт",
+    "мод", "краса", "манікюр", "психолог", "тест", "лайфхак",
+    "київ", "львів", "одес", "дніпр", "харків", "херсон", "запоріж", "микола", "черніг", "сум",
+  ];
+  if (block.some((k) => t.includes(k))) return false;
+  return allow.some((k) => t.includes(k));
+}
+
 export async function GET(request: NextRequest) {
   const kv = await getKV();
   const ip = getClientIp(request);
@@ -305,17 +364,45 @@ export async function GET(request: NextRequest) {
       ).values()
     );
 
-    // Для "Економіка" — підчищаємо нерелевантні (спорт/війна тощо), але не робимо розділ порожнім
-    const filteredItems = category === "💰 Економіка"
-      ? (() => {
-          const withText = uniqueItems.map((it) => ({
-            it,
-            text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
-          }));
-          const onlyEconomy = withText.filter(({ text }) => isEconomyRelated(text)).map(({ it }) => it);
-          return onlyEconomy.length >= 6 ? onlyEconomy : uniqueItems;
-        })()
-      : uniqueItems;
+    // Для окремих категорій — підчищаємо нерелевантні, але не робимо розділ порожнім
+    const filteredItems =
+      category === "💰 Економіка"
+        ? (() => {
+            const withText = uniqueItems.map((it) => ({
+              it,
+              text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
+            }));
+            const onlyEconomy = withText.filter(({ text }) => isEconomyRelated(text)).map(({ it }) => it);
+            return onlyEconomy.length >= 6 ? onlyEconomy : uniqueItems;
+          })()
+        : category === "🛡️ Фронт"
+          ? (() => {
+              const withText = uniqueItems.map((it) => ({
+                it,
+                text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
+              }));
+              const onlyFront = withText.filter(({ text }) => isFrontRelated(text)).map(({ it }) => it);
+              return onlyFront.length >= 6 ? onlyFront : uniqueItems;
+            })()
+          : category === "🇺🇦 Україна"
+            ? (() => {
+                const withText = uniqueItems.map((it) => ({
+                  it,
+                  text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
+                }));
+                const onlyUA = withText.filter(({ text }) => isUkraineRelated(text)).map(({ it }) => it);
+                return onlyUA.length >= 6 ? onlyUA : uniqueItems;
+              })()
+            : category === "🌍 Світ"
+              ? (() => {
+                  const withText = uniqueItems.map((it) => ({
+                    it,
+                    text: `${it.title ?? ""}\n${it.contentSnippet ?? ""}\n${it.content ?? ""}`.slice(0, 2000),
+                  }));
+                  const onlyWorld = withText.filter(({ text }) => isWorldRelated(text)).map(({ it }) => it);
+                  return onlyWorld.length >= 6 ? onlyWorld : uniqueItems;
+                })()
+          : uniqueItems;
 
     // Додаємо URL зображення: enclosure / content:encoded (в т.ч. data-src для АрміяInform) або тематичний fallback
     let itemsWithImage = filteredItems.slice(0, 30).map((item) => {
