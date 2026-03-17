@@ -16,7 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin", "cyrillic"], // Додали кирилицю
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://light-fast.com.ua";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://light-news.com.ua");
 
 // Потужна схема для Google: сайт, організація, головна сторінка, список новин
 const jsonLd = {
