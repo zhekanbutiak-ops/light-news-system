@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { usePathname } from "next/navigation";
 import { getHolidaysForDate, getHolidaysForTomorrow, getNextUpcomingHoliday } from '@/lib/holidays';
 
 interface Ad {
@@ -20,6 +21,7 @@ const CATEGORIES = [
 ];
 
 export default function Home() {
+  const pathname = usePathname();
   const [time, setTime] = useState("");
   const [darkMode, setDarkMode] = useState(true);
   const [news, setNews] = useState<any[]>([]);
@@ -55,6 +57,40 @@ export default function Home() {
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [latestPost, setLatestPost] = useState<{ slug: string; title: string; date: string; summary: string } | null>(null);
+
+  // SEO-сторінки категорій: /front, /ukraine, /world, /economy, /breaking
+  useEffect(() => {
+    const map: Record<string, string> = {
+      "/front": "🛡️ Фронт",
+      "/ukraine": "🇺🇦 Україна",
+      "/world": "🌍 Світ",
+      "/economy": "💰 Економіка",
+      "/breaking": "⚠️ Breaking",
+    };
+    const nextCat = map[pathname ?? ""] || "Головне";
+    setActiveCategory((prev) => (prev === nextCat ? prev : nextCat));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/posts/latest");
+        const data = await res.json().catch(() => ({}));
+        const post = data?.post;
+        if (!cancelled && post && typeof post.slug === "string") {
+          setLatestPost({ slug: post.slug, title: post.title, date: post.date, summary: post.summary });
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const poems = [
     "Борітеся — поборете, Вам Бог помагає! За вас правда, за вас слава і воля святая! (Т. Шевченко)",
@@ -654,6 +690,34 @@ export default function Home() {
             <p className="sr-only">
               Актуальні новини України зараз: головні події, війна та фронт, економіка, світ. Курс долара сьогодні (НБУ), карта тривог, дайджест. Офіційні джерела.
             </p>
+            {latestPost && (
+              <a
+                href={`/posts/${latestPost.slug}`}
+                className={`block rounded-3xl border p-6 sm:p-8 transition-colors ${
+                  darkMode
+                    ? "border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/30"
+                    : "border-blue-200 bg-blue-50 hover:bg-blue-100/60"
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
+                      Новий пост
+                    </span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
+                      {latestPost.date}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
+                    Читати →
+                  </span>
+                </div>
+                <h2 className={`mt-2 text-lg sm:text-xl font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"}`}>
+                  {latestPost.title}
+                </h2>
+                <p className={`mt-2 text-sm ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>{latestPost.summary}</p>
+              </a>
+            )}
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
