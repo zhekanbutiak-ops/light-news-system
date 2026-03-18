@@ -693,13 +693,13 @@ export default function Home() {
             {latestPost && (
               <a
                 href={`/posts/${latestPost.slug}`}
-                className={`block rounded-3xl border p-6 sm:p-8 transition-colors ${
+                className={`block rounded-3xl border px-6 py-4 sm:px-8 sm:py-5 transition-colors ${
                   darkMode
                     ? "border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/30"
                     : "border-blue-200 bg-blue-50 hover:bg-blue-100/60"
                 }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
                       Новий пост
@@ -712,10 +712,10 @@ export default function Home() {
                     Читати →
                   </span>
                 </div>
-                <h2 className={`mt-2 text-lg sm:text-xl font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"}`}>
+                <h2 className={`mt-1.5 text-[15px] sm:text-[16px] font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"}`}>
                   {latestPost.title}
                 </h2>
-                <p className={`mt-2 text-sm ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>{latestPost.summary}</p>
+                <p className={`mt-1.5 text-[12px] leading-snug line-clamp-2 ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>{latestPost.summary}</p>
               </a>
             )}
             {isLoadingNews ? (
