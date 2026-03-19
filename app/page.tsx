@@ -64,7 +64,7 @@ export default function Home() {
   const [armyScrollDrag, setArmyScrollDrag] = useState(false);
   const giveaway = {
     title: "Великий весняний розіграш від Light News: даруємо 1600 грн!",
-    date: "2 квітня 2026",
+    date: "01.05.2026",
     prizes: ["1 місце — 1000 грн", "2 місце — 500 грн", "3 місце — 100 грн"],
   };
 
@@ -1188,6 +1188,12 @@ export default function Home() {
               <div className="text-center md:text-left">
                   <h2 className="text-2xl sm:text-2xl font-[1000] italic mb-2 uppercase tracking-tighter">LIGHT<span className="text-red-600">NEWS</span></h2>
                   <p className="text-[10px] sm:text-[8px] font-black uppercase tracking-[0.4em] opacity-40">Kyiv • 2026 • Global Terminal</p>
+                  <a
+                    href="/giveaway"
+                    className="inline-flex mt-3 text-[10px] sm:text-[9px] font-black uppercase tracking-widest text-fuchsia-400 hover:text-fuchsia-300"
+                  >
+                    Розіграш 01.05.2026 →
+                  </a>
               </div>
 
               <div className="flex flex-col items-center md:items-end gap-3 text-right">

@@ -4,20 +4,28 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Розіграш Light News — 1600 грн",
   description:
-    "Великий весняний розіграш від Light News: 1 місце — 1000 грн, 2 місце — 500 грн, 3 місце — 100 грн. Умови участі та дата результатів.",
+    "Великий весняний розіграш від Light News: 1 місце — 1000 грн, 2 місце — 500 грн, 3 місце — 100 грн. Дата розіграшу: 01.05.2026.",
   alternates: { canonical: "/giveaway" },
   openGraph: {
     title: "Розіграш Light News — 1600 грн",
     description:
-      "Умови участі в розіграші Light News: підписка на Telegram, репост допису. Результати 2 квітня 2026.",
+      "Умови участі в розіграші Light News: підписка на Telegram, репост допису. Результати 01.05.2026.",
     url: "/giveaway",
     type: "article",
   },
-  keywords: ["розіграш", "розіграш Light News", "розіграш грошей", "акція Light News", "Telegram розіграш"],
+  keywords: [
+    "розіграш",
+    "розіграш Light News",
+    "розіграш грошей",
+    "акція Light News",
+    "Telegram розіграш",
+    "розіграш 01.05.2026",
+    "giveaway Ukraine",
+  ],
 };
 
 export default function GiveawayPage() {
-  const jsonLd = {
+  const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: "Великий весняний розіграш від Light News: 1600 грн",
@@ -25,14 +33,36 @@ export default function GiveawayPage() {
       "Умови участі в розіграші Light News: підписка на Telegram, репост допису. Три призи: 1000, 500 і 100 грн.",
     inLanguage: "uk-UA",
     datePublished: "2026-03-18",
-    dateModified: "2026-03-18",
+    dateModified: "2026-03-19",
     mainEntityOfPage: { "@type": "WebPage", "@id": "/giveaway" },
     publisher: { "@type": "Organization", name: "Light News" },
+  };
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Яка дата розіграшу Light News?",
+        acceptedAnswer: { "@type": "Answer", text: "Результати розіграшу будуть оголошені 01.05.2026 у Telegram-каналі Light News." },
+      },
+      {
+        "@type": "Question",
+        name: "Які призи у розіграші?",
+        acceptedAnswer: { "@type": "Answer", text: "1 місце — 1000 грн, 2 місце — 500 грн, 3 місце — 100 грн." },
+      },
+      {
+        "@type": "Question",
+        name: "Що потрібно для участі?",
+        acceptedAnswer: { "@type": "Answer", text: "Підписатися на Telegram-канал Light News і зробити репост закріпленого допису про розіграш." },
+      },
+    ],
   };
 
   return (
     <main className="min-h-[100dvh] bg-black text-white">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
         <div className="flex items-center justify-between gap-3 mb-6">
           <p className="text-[11px] uppercase tracking-[0.25em] text-zinc-400">Light News</p>
@@ -47,7 +77,7 @@ export default function GiveawayPage() {
             Великий весняний розіграш: даруємо 1600 грн
           </h1>
           <p className="mt-3 text-sm text-zinc-200">
-            Ми оголошуємо розіграш грошових призів для читачів Light News. Результати — <b>2 квітня 2026</b>.
+            Ми оголошуємо розіграш грошових призів для читачів Light News. Результати — <b>01.05.2026</b>.
           </p>
         </div>
 
@@ -72,9 +102,27 @@ export default function GiveawayPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
             <h2 className="text-sm font-black uppercase tracking-widest text-zinc-300">Коли результати</h2>
             <p className="mt-3 text-zinc-100">
-              Визначення переможців відбудеться <b>2 квітня 2026</b> за допомогою сервісу випадкового вибору чисел.
+              Визначення переможців відбудеться <b>01.05.2026</b> за допомогою сервісу випадкового вибору чисел.
               Публікація результатів — у Telegram-каналі.
             </p>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+            <h2 className="text-sm font-black uppercase tracking-widest text-zinc-300">FAQ</h2>
+            <div className="mt-3 space-y-3 text-zinc-100">
+              <div>
+                <p className="font-bold">Яка дата розіграшу?</p>
+                <p className="text-sm text-zinc-300">01.05.2026, результати в Telegram Light News.</p>
+              </div>
+              <div>
+                <p className="font-bold">Що потрібно зробити для участі?</p>
+                <p className="text-sm text-zinc-300">Підписатися на канал і зробити репост закріпленого допису.</p>
+              </div>
+              <div>
+                <p className="font-bold">Скільки переможців?</p>
+                <p className="text-sm text-zinc-300">Троє переможців: 1000 грн, 500 грн і 100 грн.</p>
+              </div>
+            </div>
           </section>
         </div>
 
