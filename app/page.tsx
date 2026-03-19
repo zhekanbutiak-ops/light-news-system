@@ -58,6 +58,15 @@ export default function Home() {
   const [digestLoading, setDigestLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [latestPost, setLatestPost] = useState<{ slug: string; title: string; date: string; summary: string } | null>(null);
+  const [armyInformItems, setArmyInformItems] = useState<{ title: string; link: string; pubDate?: string }[]>([]);
+  const armyScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [armyScrollPct, setArmyScrollPct] = useState(0);
+  const [armyScrollDrag, setArmyScrollDrag] = useState(false);
+  const giveaway = {
+    title: "Великий весняний розіграш від Light News: даруємо 1600 грн!",
+    date: "2 квітня 2026",
+    prizes: ["1 місце — 1000 грн", "2 місце — 500 грн", "3 місце — 100 грн"],
+  };
 
   // SEO-сторінки категорій: /front, /ukraine, /world, /economy, /breaking
   useEffect(() => {
@@ -91,6 +100,67 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/posts/armyinform");
+        const data = await res.json().catch(() => ({}));
+        const items = Array.isArray(data?.items) ? data.items : [];
+        const normalized = items
+          .map((it: any) => ({
+            title: String(it?.title ?? "").trim(),
+            link: String(it?.link ?? "").trim(),
+            pubDate: it?.pubDate ? String(it.pubDate) : undefined,
+          }))
+          .filter((x: any) => x.title && x.link)
+          .slice(0, 14);
+        if (!cancelled) setArmyInformItems(normalized);
+      } catch {
+        // ignore
+      }
+    };
+    load();
+    const t = setInterval(load, 10 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = armyScrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const max = Math.max(1, el.scrollHeight - el.clientHeight);
+      setArmyScrollPct(Math.min(1, Math.max(0, el.scrollTop / max)));
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [armyInformItems.length]);
+
+  const scrollArmyToPct = useCallback((pct: number) => {
+    const el = armyScrollRef.current;
+    if (!el) return;
+    const max = Math.max(0, el.scrollHeight - el.clientHeight);
+    el.scrollTo({ top: Math.round(max * Math.min(1, Math.max(0, pct))), behavior: "smooth" });
+  }, []);
+
+  const startArmyDrag = useCallback(() => setArmyScrollDrag(true), []);
+  const stopArmyDrag = useCallback(() => setArmyScrollDrag(false), []);
+
+  useEffect(() => {
+    if (!armyScrollDrag) return;
+    const onUp = () => setArmyScrollDrag(false);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp, { passive: true });
+    return () => {
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [armyScrollDrag]);
 
   const poems = [
     "Борітеся — поборете, Вам Бог помагає! За вас правда, за вас слава і воля святая! (Т. Шевченко)",
@@ -690,34 +760,46 @@ export default function Home() {
             <p className="sr-only">
               Актуальні новини України зараз: головні події, війна та фронт, економіка, світ. Курс долара сьогодні (НБУ), карта тривог, дайджест. Офіційні джерела.
             </p>
-            {latestPost && (
+            <div
+              className={`rounded-3xl border px-6 py-4 sm:px-8 sm:py-5 ${
+                darkMode ? "border-fuchsia-500/25 bg-fuchsia-950/10" : "border-fuchsia-200 bg-fuchsia-50"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-fuchsia-300" : "text-fuchsia-700"}`}>
+                  Подія Light News
+                </div>
+                <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
+                  {giveaway.date}
+                </div>
+              </div>
+              <h2 className={`mt-2 text-[16px] sm:text-[18px] font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"}`}>
+                {giveaway.title}
+              </h2>
+              <p className={`mt-2 text-[12px] leading-snug ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>
+                Підписка на Telegram + репост закріпленого допису. Переможців визначаємо випадково та публікуємо результати в каналі.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {giveaway.prizes.map((p) => (
+                  <span
+                    key={p}
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                      darkMode ? "bg-zinc-800 text-zinc-200 border border-zinc-700" : "bg-white text-zinc-700 border border-zinc-200"
+                    }`}
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
               <a
-                href={`/posts/${latestPost.slug}`}
-                className={`block rounded-3xl border px-6 py-4 sm:px-8 sm:py-5 transition-colors ${
-                  darkMode
-                    ? "border-blue-500/30 bg-blue-950/20 hover:bg-blue-950/30"
-                    : "border-blue-200 bg-blue-50 hover:bg-blue-100/60"
+                href="/giveaway"
+                className={`mt-3 inline-flex items-center justify-center min-h-[40px] px-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors ${
+                  darkMode ? "bg-fuchsia-700 text-white hover:bg-fuchsia-600" : "bg-fuchsia-600 text-white hover:bg-fuchsia-500"
                 }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
-                      Новий пост
-                    </span>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
-                      {latestPost.date}
-                    </span>
-                  </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
-                    Читати →
-                  </span>
-                </div>
-                <h2 className={`mt-1.5 text-[15px] sm:text-[16px] font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"}`}>
-                  {latestPost.title}
-                </h2>
-                <p className={`mt-1.5 text-[12px] leading-snug line-clamp-2 ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>{latestPost.summary}</p>
+                Деталі розіграшу →
               </a>
-            )}
+            </div>
             {isLoadingNews ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <article key={`skeleton-${i}`} className="flex flex-col md:flex-row gap-4 sm:gap-8 items-start min-w-0">
@@ -965,6 +1047,118 @@ export default function Home() {
                             </div>
                             <a href={`https://send.monobank.ua/3WbAugCy3w?a=${donateAmount}`} target="_blank" rel="noopener noreferrer" className="block w-full py-4 min-h-[52px] sm:min-h-[44px] flex items-center justify-center bg-red-600 text-white hover:bg-red-500 rounded-2xl text-[12px] sm:text-[10px] font-black text-center uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] touch-manipulation">Підтримати {donateAmount} ₴</a>
                         </div>
+
+                        {latestPost && (
+                          <a
+                            href={`/posts/${latestPost.slug}`}
+                            className={`block rounded-2xl border px-5 py-4 transition-colors ${
+                              darkMode
+                                ? "border-blue-500/25 bg-blue-950/15 hover:bg-blue-950/25"
+                                : "border-blue-200 bg-blue-50 hover:bg-blue-100/60"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-blue-300" : "text-blue-700"}`}>
+                                Новий пост
+                              </div>
+                              <div className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-zinc-400" : "text-zinc-600"}`}>
+                                {latestPost.date}
+                              </div>
+                            </div>
+                            <div className={`mt-1.5 text-[13px] font-black italic uppercase tracking-tight ${darkMode ? "text-white" : "text-zinc-900"} line-clamp-2`}>
+                              {latestPost.title}
+                            </div>
+                            <div className={`mt-1.5 text-[11px] leading-snug line-clamp-2 ${darkMode ? "text-zinc-300" : "text-zinc-700"}`}>
+                              {latestPost.summary}
+                            </div>
+                          </a>
+                        )}
+
+                        {armyInformItems.length > 0 && (
+                          <div
+                            className={`group relative rounded-2xl border px-5 py-4 ${
+                              darkMode ? "border-emerald-500/25 bg-emerald-950/10" : "border-emerald-200 bg-emerald-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>
+                                ArmyInform
+                              </div>
+                              <a
+                                href="/posts/armyinform"
+                                className={`text-[10px] font-black uppercase tracking-widest ${
+                                  darkMode ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-800"
+                                }`}
+                              >
+                                Всі →
+                              </a>
+                            </div>
+
+                            <div
+                              ref={armyScrollRef}
+                              className="mt-2.5 max-h-[92px] overflow-y-auto scrollbar-hide space-y-2 pr-4"
+                            >
+                              {armyInformItems.slice(0, 14).map((it) => (
+                                <a
+                                  key={`aside-${it.link}`}
+                                  href={it.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`block rounded-xl border px-3 py-2 transition-colors ${
+                                    darkMode
+                                      ? "border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/40"
+                                      : "border-zinc-200 bg-white hover:bg-zinc-50"
+                                  }`}
+                                  title="Відкрити на ArmyInform"
+                                >
+                                  <div className={`text-[12px] font-bold leading-snug line-clamp-2 ${darkMode ? "text-zinc-200" : "text-zinc-800"}`}>
+                                    {it.title}
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+
+                            <div className="absolute right-1 top-[44px] bottom-4 w-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                aria-label="Скрол ArmyInform"
+                                onMouseDown={startArmyDrag}
+                                onTouchStart={startArmyDrag}
+                                onMouseMove={(e) => {
+                                  if (!armyScrollDrag) return;
+                                  const rect = (e.currentTarget.parentElement as HTMLDivElement).getBoundingClientRect();
+                                  const y = (e.clientY - rect.top) / Math.max(1, rect.height);
+                                  scrollArmyToPct(y);
+                                }}
+                                onTouchMove={(e) => {
+                                  if (!armyScrollDrag) return;
+                                  const t = e.touches?.[0];
+                                  if (!t) return;
+                                  const rect = (e.currentTarget.parentElement as HTMLDivElement).getBoundingClientRect();
+                                  const y = (t.clientY - rect.top) / Math.max(1, rect.height);
+                                  scrollArmyToPct(y);
+                                }}
+                                onMouseUp={stopArmyDrag}
+                                onMouseLeave={stopArmyDrag}
+                                className="absolute inset-0"
+                                style={{ touchAction: "none" }}
+                                onClick={(e) => {
+                                  const rect = (e.currentTarget.parentElement as HTMLDivElement).getBoundingClientRect();
+                                  const y = (e.clientY - rect.top) / Math.max(1, rect.height);
+                                  scrollArmyToPct(y);
+                                }}
+                              />
+                              <div
+                                className={`absolute left-1/2 -translate-x-1/2 h-2.5 w-2.5 rounded-full ${
+                                  darkMode
+                                    ? "bg-emerald-300/85 shadow-[0_0_0_6px_rgba(16,185,129,0.10)]"
+                                    : "bg-emerald-700/85 shadow-[0_0_0_6px_rgba(5,150,105,0.10)]"
+                                }`}
+                                style={{ top: `${Math.round(armyScrollPct * 100)}%`, transform: "translate(-50%, -50%)" }}
+                              />
+                            </div>
+                          </div>
+                        )}
                     </div>
 
                 </div>

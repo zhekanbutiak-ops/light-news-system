@@ -44,6 +44,22 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function isBadAiDescription(text: string): boolean {
+  const t = (text || "").toLowerCase().trim();
+  if (!t) return true;
+  const badPatterns = [
+    "я не бачу тексту",
+    "будь ласка, надішліть текст",
+    "надішліть текст",
+    "опис недоступний",
+    "не можу проаналізувати",
+    "не бачу тексту для аналізу",
+    "щоб я міг",
+    "надайте текст",
+  ];
+  return badPatterns.some((p) => t.includes(p));
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
@@ -183,9 +199,13 @@ export async function GET(req: NextRequest) {
 
     const safeSource = escapeHtml(source.name);
     const safeTitle = escapeHtml(originalTitle);
-    const safeDesc = escapeHtml(String(aiDescription).trim());
+    const cleanedAi = String(aiDescription).trim();
+    const safeDesc = escapeHtml(cleanedAi);
     const safeLink = escapeHtml(String(latestNews.link || ""));
-    const message = `<b>${safeSource}</b>${repost ? " <i>(повтор)</i>" : ""}\n\n<b>${safeTitle}</b>\n\n${safeDesc}\n\n👉 <a href="${safeLink}">Читати повністю</a>`;
+    const includeDesc = !isBadAiDescription(cleanedAi);
+    const message = includeDesc
+      ? `<b>${safeSource}</b>${repost ? " <i>(повтор)</i>" : ""}\n\n<b>${safeTitle}</b>\n\n${safeDesc}\n\n👉 <a href="${safeLink}">Читати повністю</a>`
+      : `<b>${safeSource}</b>${repost ? " <i>(повтор)</i>" : ""}\n\n<b>${safeTitle}</b>\n\n👉 <a href="${safeLink}">Читати повністю</a>`;
 
     const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -215,8 +235,7 @@ export async function GET(req: NextRequest) {
       `${source.name}${repost ? " (повтор)" : ""}`,
       "",
       originalTitle,
-      "",
-      String(aiDescription).trim(),
+      ...(includeDesc ? ["", cleanedAi] : []),
       "",
       `Читати повністю: ${latestNews.link || ""}`,
     ].join("\n");

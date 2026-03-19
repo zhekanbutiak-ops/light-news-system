@@ -30,6 +30,22 @@ export default async function PostsIndexPage() {
           </Link>
         </div>
 
+        <Link
+          href="/posts/armyinform"
+          className="mb-6 block rounded-3xl border border-emerald-500/25 bg-emerald-950/15 p-6 hover:bg-emerald-950/25 transition-colors"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Автострічка</div>
+              <div className="mt-2 text-lg sm:text-xl font-black italic uppercase tracking-tight">ArmyInform: заголовки + посилання</div>
+              <div className="mt-2 text-sm text-zinc-300">Без копіювання тексту. Натискаєш — переходиш на першоджерело.</div>
+            </div>
+            <div className="shrink-0 text-[11px] font-black uppercase tracking-widest text-emerald-300">
+              Відкрити →
+            </div>
+          </div>
+        </Link>
+
         {posts.length === 0 ? (
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 text-zinc-300">
             Поки що немає постів. Додайте файл у <code className="text-zinc-100">content/posts</code> і задеплойте.

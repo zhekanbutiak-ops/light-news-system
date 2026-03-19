@@ -11,6 +11,22 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function isBadAiDescription(text: string): boolean {
+  const t = (text || "").toLowerCase().trim();
+  if (!t) return true;
+  const badPatterns = [
+    "я не бачу тексту",
+    "будь ласка, надішліть текст",
+    "надішліть текст",
+    "опис недоступний",
+    "не можу проаналізувати",
+    "не бачу тексту для аналізу",
+    "щоб я міг",
+    "надайте текст",
+  ];
+  return badPatterns.some((p) => t.includes(p));
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 0. Тільки cron (або внутрішні виклики з CRON_SECRET) можуть публікувати
@@ -51,9 +67,13 @@ export async function POST(req: NextRequest) {
 
     // 4. Повідомлення: оригінальний заголовок + AI-опис + посилання (екрануємо HTML)
     const safeTitle = escapeHtml(String(title));
-    const safeDesc = escapeHtml(aiDescription);
+    const cleanedAi = String(aiDescription).trim();
+    const safeDesc = escapeHtml(cleanedAi);
     const safeLink = link ? escapeHtml(String(link)) : '';
-    const message = `<b>${safeTitle}</b>\n\n${safeDesc}\n\n👉 <a href="${safeLink}">Читати повністю</a>`;
+    const includeDesc = !isBadAiDescription(cleanedAi);
+    const message = includeDesc
+      ? `<b>${safeTitle}</b>\n\n${safeDesc}\n\n👉 <a href="${safeLink}">Читати повністю</a>`
+      : `<b>${safeTitle}</b>\n\n👉 <a href="${safeLink}">Читати повністю</a>`;
 
     // 5. Відправка в Telegram
     const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
